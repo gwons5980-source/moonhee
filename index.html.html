@@ -467,8 +467,14 @@
             if (currentRoom && !cloudApplying) scheduleCloudSave();
         }
 
+        function setText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value == null ? '' : value;
+        }
+
         function setGateMessage(message, isError = true) {
             const el = document.getElementById('gate-message');
+            if (!el) return;
             el.textContent = message || '';
             el.className = `text-xs text-center mt-4 whitespace-pre-line ${isError ? 'text-rose-600' : 'text-emerald-700'}`;
         }
@@ -477,7 +483,7 @@
             authMode = mode;
             document.getElementById('login-tab').className = mode === 'login' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
             document.getElementById('signup-tab').className = mode === 'signup' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
-            document.getElementById('auth-submit').textContent = mode === 'login' ? '로그인' : '회원가입';
+            setText('auth-submit', mode === 'login' ? '로그인' : '회원가입');
             document.getElementById('auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
             setGateMessage('');
         }
@@ -524,10 +530,10 @@
             }
             document.getElementById('auth-panel').classList.add('hidden');
             document.getElementById('room-panel').classList.remove('hidden');
-            document.getElementById('signed-in-label').textContent = session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자';
+            setText('signed-in-label', session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자');
             setGateMessage('연결된 포도판을 확인하고 있어요...', false);
             try {
-                const { data, error } = await supabaseClient.from('grape_rooms').select('*').or(`member1.eq.${session.user.id},member2.eq.${session.user.id}`).maybeSingle();
+                const { data, error } = await supabaseClient.from('grape_rooms').select('*').or(`member1.eq.${session.user.id},member2.eq.${session.user.id}`).order('updated_at', { ascending: false }).limit(1).maybeSingle();
                 if (error) throw error;
                 if (data) {
                     await enterGrapeRoom(data);
@@ -552,8 +558,21 @@ ${error.message}`);
 
         async function createGrapeRoom() {
             if (!currentSession) return;
-            setGateMessage('공유 포도판을 만들고 있어요...', false);
+            setGateMessage('공유 포도판을 확인하고 있어요...', false);
             try {
+                // 이전 시도에서 방 생성만 성공하고 화면 표시가 실패했을 수 있으므로,
+                // 새 방을 만들기 전에 현재 계정의 기존 방을 먼저 재사용합니다.
+                const existingResult = await supabaseClient.from('grape_rooms').select('*')
+                    .or(`member1.eq.${currentSession.user.id},member2.eq.${currentSession.user.id}`)
+                    .order('updated_at', { ascending: false }).limit(1).maybeSingle();
+                if (existingResult.error) throw existingResult.error;
+                if (existingResult.data) {
+                    await enterGrapeRoom(existingResult.data);
+                    const gate = document.getElementById('auth-gate');
+                    if (gate) gate.classList.add('hidden');
+                    showToast('기존 포도판에 다시 연결했어요.');
+                    return;
+                }
                 const initial = { ...appData, currentUserKey: 'user1', viewTargetUserKey: 'user1' };
                 let created = null;
                 for (let i = 0; i < 5; i++) {
@@ -564,10 +583,14 @@ ${error.message}`);
                 }
                 if (!created) throw new Error('초대 코드 생성에 실패했어요. 다시 시도해 주세요.');
                 await enterGrapeRoom(created);
-                document.getElementById('auth-gate').classList.add('hidden');
+                const gate = document.getElementById('auth-gate');
+                if (gate) gate.classList.add('hidden');
                 showToast('우리 포도판을 만들었어요! 초대 코드를 상대방에게 보내주세요.');
                 copyInviteCode();
-            } catch (error) { setGateMessage(`포도판 생성 실패: ${error.message}`); }
+            } catch (error) {
+                console.error('포도판 생성/연결 상세 오류:', error);
+                setGateMessage(`포도판 생성 실패: ${error.message || error}`);
+            }
         }
 
         async function joinGrapeRoom() {
@@ -577,13 +600,16 @@ ${error.message}`);
             setGateMessage('초대 코드 확인 중...', false);
             try {
                 const { data, error } = await supabaseClient.rpc('join_grape_room', { p_invite_code: code });
-                if (error) throw error;
+                if (error) {
+                    console.error('join_grape_room RPC error:', error);
+                    throw new Error(`${error.message}${error.details ? `\n상세: ${error.details}` : ''}${error.hint ? `\n안내: ${error.hint}` : ''}`);
+                }
                 const room = Array.isArray(data) ? data[0] : data;
                 if (!room) throw new Error('초대 코드를 찾을 수 없어요.');
                 await enterGrapeRoom(room);
                 document.getElementById('auth-gate').classList.add('hidden');
                 showToast('두 사람의 포도판이 연결됐어요!');
-            } catch (error) { setGateMessage(`참여 실패: ${error.message}`); }
+            } catch (error) { console.error('초대 코드 참여 실패:', error); setGateMessage(`참여 실패: ${error.message || '알 수 없는 오류'}`); }
         }
 
         async function enterGrapeRoom(room) {
@@ -599,8 +625,8 @@ ${error.message}`);
             appData.viewTargetUserKey = localKey;
             lastCloudUpdatedAt = room.updated_at || null;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-            document.getElementById('current-user-name').textContent = appData.users[localKey].name;
-            document.getElementById('invite-code-btn').textContent = `초대 코드 ${room.invite_code}`;
+            setText('current-user-name', appData.users[localKey].name);
+            setText('invite-code-btn', `초대 코드 ${room.invite_code}`);
             renderAll();
             roomChannel = supabaseClient.channel(`grape-room-${room.id}`)
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'grape_rooms', filter: `id=eq.${room.id}` }, payload => {
@@ -613,7 +639,7 @@ ${error.message}`);
                     appData = { ...appData, ...updated.data, currentUserKey: keepKey, viewTargetUserKey: keepKey, activeBoardType: keepType };
                     lastCloudUpdatedAt = updated.updated_at;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                    document.getElementById('current-user-name').textContent = appData.users[keepKey].name;
+                    setText('current-user-name', appData.users[keepKey].name);
                     renderAll();
                     cloudApplying = false;
                 })
@@ -721,18 +747,18 @@ ${error.message}`);
             const partnerUser = getPartnerUser();
 
             // Header Button
-            document.getElementById('current-user-name').textContent = currUser.name;
+            setText('current-user-name', currUser.name);
 
             // Names Ribbon
-            document.getElementById('giver-name-lbl').textContent = currUser.name;
-            document.getElementById('receiver-name-lbl').textContent = partnerUser.name;
+            setText('giver-name-lbl', currUser.name);
+            setText('receiver-name-lbl', partnerUser.name);
 
             // Cards Names
-            document.getElementById('name-display-user1').textContent = appData.users.user1.name;
-            document.getElementById('name-display-user2').textContent = appData.users.user2.name;
+            setText('name-display-user1', appData.users.user1.name);
+            setText('name-display-user2', appData.users.user2.name);
 
-            document.getElementById('board-round-user1').textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user1.good.round} / 나빠요 Vol.${appData.activeBoards.user1.bad.round}`;
-            document.getElementById('board-round-user2').textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user2.good.round} / 나빠요 Vol.${appData.activeBoards.user2.bad.round}`;
+            setText('board-round-user1', `진행중: 좋아요 Vol.${appData.activeBoards.user1.good.round} / 나빠요 Vol.${appData.activeBoards.user1.bad.round}`);
+            setText('board-round-user2', `진행중: 좋아요 Vol.${appData.activeBoards.user2.good.round} / 나빠요 Vol.${appData.activeBoards.user2.bad.round}`);
 
             // Card Highlight
             const c1 = document.getElementById('card-user1');
@@ -750,8 +776,8 @@ ${error.message}`);
             const btn2 = document.getElementById('view-user2-btn');
             // 구버전 화면에는 개별 판 선택 버튼이 없으므로, 버튼이 있을 때만 갱신합니다.
             if (btn1 && btn2) {
-                btn1.textContent = `${appData.users.user1.name}의 판`;
-                btn2.textContent = `${appData.users.user2.name}의 판`;
+                setText('view-user1-btn', `${appData.users.user1.name}의 판`);
+                setText('view-user2-btn', `${appData.users.user2.name}의 판`);
 
                 if (appData.viewTargetUserKey === 'user1') {
                     btn1.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
@@ -802,23 +828,23 @@ ${error.message}`);
             const awardIcon = document.getElementById('award-btn-icon');
             const awardLabel = document.getElementById('award-btn-label');
 
-            document.getElementById('giver-name-lbl').textContent = currUser.name;
-            document.getElementById('receiver-name-lbl').textContent = partnerUser.name;
+            setText('giver-name-lbl', currUser.name);
+            setText('receiver-name-lbl', partnerUser.name);
 
             if (isGood) {
                 ribbon.className = 'bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 rounded-2xl p-4 border border-pink-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 transition-all';
-                ribbonIcon.textContent = '💖';
-                ribbonTitle.textContent = '좋아요 포도알 선물하기';
+                setText('ribbon-icon', '💖');
+                setText('ribbon-title', '좋아요 포도알 선물하기');
                 awardBtn.className = 'w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-bold rounded-xl shadow-md flex items-center justify-center space-x-1.5';
-                awardIcon.textContent = '💖';
-                awardLabel.textContent = '상대방에게 좋아요 주기';
+                setText('award-btn-icon', '💖');
+                setText('award-btn-label', '상대방에게 좋아요 주기');
             } else {
                 ribbon.className = 'bg-gradient-to-r from-indigo-50 via-slate-50 to-amber-50 rounded-2xl p-4 border border-indigo-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 transition-all';
-                ribbonIcon.textContent = '💔';
-                ribbonTitle.textContent = '나빠요 포도알 남기기';
+                setText('ribbon-icon', '💔');
+                setText('ribbon-title', '나빠요 포도알 남기기');
                 awardBtn.className = 'w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-indigo-500 to-slate-600 hover:from-indigo-600 hover:to-slate-700 text-white text-xs font-bold rounded-xl shadow-md flex items-center justify-center space-x-1.5';
-                awardIcon.textContent = '💔';
-                awardLabel.textContent = '상대방에게 나빠요 주기';
+                setText('award-btn-icon', '💔');
+                setText('award-btn-label', '상대방에게 나빠요 주기');
             }
 
             ['user1', 'user2'].forEach(userKey => {
@@ -831,9 +857,9 @@ ${error.message}`);
                 const round = document.getElementById(`board-round-${userKey}-main`);
                 const progress = document.getElementById(`board-progress-${userKey}`);
 
-                heading.textContent = `${user.name}의 ${isGood ? '좋아요' : '나빠요'} 포도판`;
-                round.textContent = `15개 중 ${total}개 수확 (Vol. ${board.round})`;
-                progress.textContent = `${total} / 15`;
+                setText(`board-heading-${userKey}`, `${user.name}의 ${isGood ? '좋아요' : '나빠요'} 포도판`);
+                setText(`board-round-${userKey}-main`, `15개 중 ${total}개 수확 (Vol. ${board.round})`);
+                setText(`board-progress-${userKey}`, `${total} / 15`);
 
                 if (isGood) {
                     card.className = 'bg-white rounded-3xl border-2 border-pink-200 shadow-lg overflow-hidden flex flex-col relative transition-all';
@@ -991,14 +1017,14 @@ ${error.message}`);
             const giverKey = appData.currentUserKey;
             const receiverKey = getPartnerKey(giverKey);
             const isGood = type === 'good';
-            document.getElementById('modal-type-icon').textContent = isGood ? '💖' : '💔';
-            document.getElementById('modal-title').textContent = isGood ? '좋아요 포도알 붙이기' : '나빠요 포도알 붙이기';
-            document.getElementById('modal-giver-name').textContent = `보내는 사람: ${appData.users[giverKey].name}`;
-            document.getElementById('modal-receiver-name').textContent = `받는 사람: ${appData.users[receiverKey].name}`;
+            setText('modal-type-icon', isGood ? '💖' : '💔');
+            setText('modal-title', isGood ? '좋아요 포도알 붙이기' : '나빠요 포도알 붙이기');
+            setText('modal-giver-name', `보내는 사람: ${appData.users[giverKey].name}`);
+            setText('modal-receiver-name', `받는 사람: ${appData.users[receiverKey].name}`);
             document.getElementById('award-reason').value = '';
             document.querySelector('input[name="sticker-amount"][value="0.5"]').checked = true;
             const used = getTodayUsedCount(giverKey, receiverKey, type);
-            document.getElementById('modal-remaining-quota').textContent = `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3-used)}개`;
+            setText('modal-remaining-quota', `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3-used)}개`);
             document.getElementById('modal-award').classList.remove('hidden');
         }
         function closeAwardModal() { document.getElementById('modal-award').classList.add('hidden'); }
@@ -1039,13 +1065,13 @@ ${error.message}`);
         }
         function openDetailModal(sticker, boardType = currentDetailType) {
             const good = boardType === 'good';
-            document.getElementById('detail-icon').textContent = good ? (sticker.amount === 0.5 ? '💧' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔');
-            document.getElementById('detail-type-badge').textContent = `${good ? '좋아요' : '나빠요'} 포도알 +${Number(sticker.amount).toFixed(1)}`;
+            setText('detail-icon', good ? (sticker.amount === 0.5 ? '💧' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔'));
+            setText('detail-type-badge', `${good ? '좋아요' : '나빠요'} 포도알 +${Number(sticker.amount).toFixed(1)}`);
             document.getElementById('detail-accent-bar').className = `absolute top-0 left-0 right-0 h-3 ${good ? 'bg-pink-400' : 'bg-indigo-500'}`;
-            document.getElementById('detail-reason').textContent = sticker.reason || '';
-            document.getElementById('detail-giver').textContent = appData.users[sticker.giverKey]?.name || '-';
-            document.getElementById('detail-receiver').textContent = appData.users[sticker.receiverKey]?.name || '-';
-            document.getElementById('detail-date').textContent = formatDate(sticker.createdAt);
+            setText('detail-reason', sticker.reason || '');
+            setText('detail-giver', appData.users[sticker.giverKey]?.name || '-');
+            setText('detail-receiver', appData.users[sticker.receiverKey]?.name || '-');
+            setText('detail-date', formatDate(sticker.createdAt));
             document.getElementById('modal-detail').classList.remove('hidden');
         }
         function closeDetailModal() { document.getElementById('modal-detail').classList.add('hidden'); }
@@ -1062,7 +1088,7 @@ ${error.message}`);
             const name = document.getElementById('edit-user-input').value.trim();
             if (!name) return;
             appData.users[key].name = name;
-            if (key === appData.currentUserKey) document.getElementById('current-user-name').textContent = name;
+            setText('current-user-name', name);
             saveStorage();
             closeEditNameModal();
             renderAll();
@@ -1084,6 +1110,7 @@ ${error.message}`);
         function showToast(message) {
             const toast = document.getElementById('toast-msg');
             const text = document.getElementById('toast-text');
+            if (!toast || !text) { console.warn('알림 표시 요소를 찾지 못했습니다:', message); return; }
             text.textContent = message;
 
             toast.classList.remove('opacity-0', 'pointer-events-none');
