@@ -469,6 +469,7 @@
 
         function setGateMessage(message, isError = true) {
             const el = document.getElementById('gate-message');
+            if (!el) return;
             el.textContent = message || '';
             el.className = `text-xs text-center mt-4 whitespace-pre-line ${isError ? 'text-rose-600' : 'text-emerald-700'}`;
         }
@@ -477,7 +478,7 @@
             authMode = mode;
             document.getElementById('login-tab').className = mode === 'login' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
             document.getElementById('signup-tab').className = mode === 'signup' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
-            document.getElementById('auth-submit').textContent = mode === 'login' ? '로그인' : '회원가입';
+            document.getElementById('auth-submit')?.textContent = mode === 'login' ? '로그인' : '회원가입';
             document.getElementById('auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
             setGateMessage('');
         }
@@ -524,7 +525,7 @@
             }
             document.getElementById('auth-panel').classList.add('hidden');
             document.getElementById('room-panel').classList.remove('hidden');
-            document.getElementById('signed-in-label').textContent = session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자';
+            document.getElementById('signed-in-label')?.textContent = session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자';
             setGateMessage('연결된 포도판을 확인하고 있어요...', false);
             try {
                 const { data, error } = await supabaseClient.from('grape_rooms').select('*').or(`member1.eq.${session.user.id},member2.eq.${session.user.id}`).maybeSingle();
@@ -599,8 +600,8 @@ ${error.message}`);
             appData.viewTargetUserKey = localKey;
             lastCloudUpdatedAt = room.updated_at || null;
             localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-            document.getElementById('current-user-name').textContent = appData.users[localKey].name;
-            document.getElementById('invite-code-btn').textContent = `초대 코드 ${room.invite_code}`;
+            document.getElementById('current-user-name')?.textContent = appData.users[localKey].name;
+            document.getElementById('invite-code-btn')?.textContent = `초대 코드 ${room.invite_code}`;
             renderAll();
             roomChannel = supabaseClient.channel(`grape-room-${room.id}`)
                 .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'grape_rooms', filter: `id=eq.${room.id}` }, payload => {
@@ -613,7 +614,7 @@ ${error.message}`);
                     appData = { ...appData, ...updated.data, currentUserKey: keepKey, viewTargetUserKey: keepKey, activeBoardType: keepType };
                     lastCloudUpdatedAt = updated.updated_at;
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                    document.getElementById('current-user-name').textContent = appData.users[keepKey].name;
+                    document.getElementById('current-user-name')?.textContent = appData.users[keepKey].name;
                     renderAll();
                     cloudApplying = false;
                 })
@@ -721,18 +722,18 @@ ${error.message}`);
             const partnerUser = getPartnerUser();
 
             // Header Button
-            document.getElementById('current-user-name').textContent = currUser.name;
+            document.getElementById('current-user-name')?.textContent = currUser.name;
 
             // Names Ribbon
-            document.getElementById('giver-name-lbl').textContent = currUser.name;
-            document.getElementById('receiver-name-lbl').textContent = partnerUser.name;
+            document.getElementById('giver-name-lbl')?.textContent = currUser.name;
+            document.getElementById('receiver-name-lbl')?.textContent = partnerUser.name;
 
             // Cards Names
-            document.getElementById('name-display-user1').textContent = appData.users.user1.name;
-            document.getElementById('name-display-user2').textContent = appData.users.user2.name;
+            document.getElementById('name-display-user1')?.textContent = appData.users.user1.name;
+            document.getElementById('name-display-user2')?.textContent = appData.users.user2.name;
 
-            document.getElementById('board-round-user1').textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user1.good.round} / 나빠요 Vol.${appData.activeBoards.user1.bad.round}`;
-            document.getElementById('board-round-user2').textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user2.good.round} / 나빠요 Vol.${appData.activeBoards.user2.bad.round}`;
+            document.getElementById('board-round-user1')?.textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user1.good.round} / 나빠요 Vol.${appData.activeBoards.user1.bad.round}`;
+            document.getElementById('board-round-user2')?.textContent = `진행중: 좋아요 Vol.${appData.activeBoards.user2.good.round} / 나빠요 Vol.${appData.activeBoards.user2.bad.round}`;
 
             // Card Highlight
             const c1 = document.getElementById('card-user1');
@@ -748,15 +749,18 @@ ${error.message}`);
             // Target selector buttons
             const btn1 = document.getElementById('view-user1-btn');
             const btn2 = document.getElementById('view-user2-btn');
-            btn1.textContent = `${appData.users.user1.name}의 판`;
-            btn2.textContent = `${appData.users.user2.name}의 판`;
+            // 구버전 화면에는 개별 판 선택 버튼이 없으므로, 버튼이 있을 때만 갱신합니다.
+            if (btn1 && btn2) {
+                btn1.textContent = `${appData.users.user1.name}의 판`;
+                btn2.textContent = `${appData.users.user2.name}의 판`;
 
-            if (appData.viewTargetUserKey === 'user1') {
-                btn1.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
-                btn2.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
-            } else {
-                btn2.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
-                btn1.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
+                if (appData.viewTargetUserKey === 'user1') {
+                    btn1.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
+                    btn2.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
+                } else {
+                    btn2.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
+                    btn1.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
+                }
             }
 
             // Board type tab highlights
@@ -799,8 +803,8 @@ ${error.message}`);
             const awardIcon = document.getElementById('award-btn-icon');
             const awardLabel = document.getElementById('award-btn-label');
 
-            document.getElementById('giver-name-lbl').textContent = currUser.name;
-            document.getElementById('receiver-name-lbl').textContent = partnerUser.name;
+            document.getElementById('giver-name-lbl')?.textContent = currUser.name;
+            document.getElementById('receiver-name-lbl')?.textContent = partnerUser.name;
 
             if (isGood) {
                 ribbon.className = 'bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 rounded-2xl p-4 border border-pink-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 transition-all';
@@ -988,14 +992,14 @@ ${error.message}`);
             const giverKey = appData.currentUserKey;
             const receiverKey = getPartnerKey(giverKey);
             const isGood = type === 'good';
-            document.getElementById('modal-type-icon').textContent = isGood ? '💖' : '💔';
-            document.getElementById('modal-title').textContent = isGood ? '좋아요 포도알 붙이기' : '나빠요 포도알 붙이기';
-            document.getElementById('modal-giver-name').textContent = `보내는 사람: ${appData.users[giverKey].name}`;
-            document.getElementById('modal-receiver-name').textContent = `받는 사람: ${appData.users[receiverKey].name}`;
+            document.getElementById('modal-type-icon')?.textContent = isGood ? '💖' : '💔';
+            document.getElementById('modal-title')?.textContent = isGood ? '좋아요 포도알 붙이기' : '나빠요 포도알 붙이기';
+            document.getElementById('modal-giver-name')?.textContent = `보내는 사람: ${appData.users[giverKey].name}`;
+            document.getElementById('modal-receiver-name')?.textContent = `받는 사람: ${appData.users[receiverKey].name}`;
             document.getElementById('award-reason').value = '';
             document.querySelector('input[name="sticker-amount"][value="0.5"]').checked = true;
             const used = getTodayUsedCount(giverKey, receiverKey, type);
-            document.getElementById('modal-remaining-quota').textContent = `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3-used)}개`;
+            document.getElementById('modal-remaining-quota')?.textContent = `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3-used)}개`;
             document.getElementById('modal-award').classList.remove('hidden');
         }
         function closeAwardModal() { document.getElementById('modal-award').classList.add('hidden'); }
@@ -1036,13 +1040,13 @@ ${error.message}`);
         }
         function openDetailModal(sticker, boardType = currentDetailType) {
             const good = boardType === 'good';
-            document.getElementById('detail-icon').textContent = good ? (sticker.amount === 0.5 ? '💧' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔');
-            document.getElementById('detail-type-badge').textContent = `${good ? '좋아요' : '나빠요'} 포도알 +${Number(sticker.amount).toFixed(1)}`;
+            document.getElementById('detail-icon')?.textContent = good ? (sticker.amount === 0.5 ? '💧' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔');
+            document.getElementById('detail-type-badge')?.textContent = `${good ? '좋아요' : '나빠요'} 포도알 +${Number(sticker.amount).toFixed(1)}`;
             document.getElementById('detail-accent-bar').className = `absolute top-0 left-0 right-0 h-3 ${good ? 'bg-pink-400' : 'bg-indigo-500'}`;
-            document.getElementById('detail-reason').textContent = sticker.reason || '';
-            document.getElementById('detail-giver').textContent = appData.users[sticker.giverKey]?.name || '-';
-            document.getElementById('detail-receiver').textContent = appData.users[sticker.receiverKey]?.name || '-';
-            document.getElementById('detail-date').textContent = formatDate(sticker.createdAt);
+            document.getElementById('detail-reason')?.textContent = sticker.reason || '';
+            document.getElementById('detail-giver')?.textContent = appData.users[sticker.giverKey]?.name || '-';
+            document.getElementById('detail-receiver')?.textContent = appData.users[sticker.receiverKey]?.name || '-';
+            document.getElementById('detail-date')?.textContent = formatDate(sticker.createdAt);
             document.getElementById('modal-detail').classList.remove('hidden');
         }
         function closeDetailModal() { document.getElementById('modal-detail').classList.add('hidden'); }
@@ -1059,7 +1063,7 @@ ${error.message}`);
             const name = document.getElementById('edit-user-input').value.trim();
             if (!name) return;
             appData.users[key].name = name;
-            if (key === appData.currentUserKey) document.getElementById('current-user-name').textContent = name;
+            if (key === appData.currentUserKey) document.getElementById('current-user-name')?.textContent = name;
             saveStorage();
             closeEditNameModal();
             renderAll();
