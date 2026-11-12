@@ -107,40 +107,8 @@
     </div>
   </header>
 
-  <div class="dual-board">
-    <!-- 사용자 1 카드 -->
-    <div class="user-card" id="card-user1">
-      <div class="user-card-header">
-        <span class="user-name" id="name-user1" onclick="editUserName('user1')">사용자 1 ✏️</span>
-      </div>
-      <div class="board-toggle" id="toggle-user1">
-        <button class="active like" onclick="switchBoard('user1', 'like')">좋아요</button>
-        <button class="bad" onclick="switchBoard('user1', 'bad')">나빠요</button>
-      </div>
-      <div class="board-status">
-        <span id="vol-user1">Vol. 1</span>
-        <span id="count-user1">0 / 15개</span>
-      </div>
-      <div class="grape-container" id="grape-user1"></div>
-      <div class="memo-section" id="memoSection-user1"></div>
-    </div>
-
-    <!-- 사용자 2 카드 -->
-    <div class="user-card" id="card-user2">
-      <div class="user-card-header">
-        <span class="user-name" id="name-user2" onclick="editUserName('user2')">사용자 2 ✏️</span>
-      </div>
-      <div class="board-toggle" id="toggle-user2">
-        <button class="active like" onclick="switchBoard('user2', 'like')">좋아요</button>
-        <button class="bad" onclick="switchBoard('user2', 'bad')">나빠요</button>
-      </div>
-      <div class="board-status">
-        <span id="vol-user2">Vol. 1</span>
-        <span id="count-user2">0 / 15개</span>
-      </div>
-      <div class="grape-container" id="grape-user2"></div>
-      <div class="memo-section" id="memoSection-user2"></div>
-    </div>
+  <div class="dual-board" id="dualBoardContainer">
+    <!-- 동적으로 내 카드와 상대방 카드가 내 기준 좌/우로 배치됩니다 -->
   </div>
 </div>
 
@@ -302,8 +270,37 @@
   }
 
   function renderAll() {
-    renderBoard('user1');
-    renderBoard('user2');
+    const container = document.getElementById('dualBoardContainer');
+    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+
+    // 💡 내 카드가 항상 왼쪽에, 상대방 카드가 오른쪽에 오도록 동적 렌더링!
+    container.innerHTML = `
+      ${createCardHtml(currentUserId)}
+      ${createCardHtml(otherUserId)}
+    `;
+
+    renderBoardContent(currentUserId);
+    renderBoardContent(otherUserId);
+  }
+
+  function createCardHtml(userId) {
+    return `
+      <div class="user-card" id="card-${userId}">
+        <div class="user-card-header">
+          <span class="user-name" id="name-${userId}" onclick="editUserName('${userId}')"></span>
+        </div>
+        <div class="board-toggle" id="toggle-${userId}">
+          <button class="active like" onclick="switchBoard('${userId}', 'like')">좋아요</button>
+          <button class="bad" onclick="switchBoard('${userId}', 'bad')">나빠요</button>
+        </div>
+        <div class="board-status">
+          <span id="vol-${userId}">Vol. 1</span>
+          <span id="count-${userId}">0 / 15개</span>
+        </div>
+        <div class="grape-container" id="grape-${userId}"></div>
+        <div class="memo-section" id="memoSection-${userId}"></div>
+      </div>
+    `;
   }
 
   async function editUserName(userId) {
@@ -320,7 +317,7 @@
     }
   }
 
-  function renderBoard(userId) {
+  function renderBoardContent(userId) {
     const tab = appState.users[userId].activeTab;
     const board = appState.boards[userId][tab];
     const container = document.getElementById(`grape-${userId}`);
@@ -328,7 +325,9 @@
     const memoSection = document.getElementById(`memoSection-${userId}`);
     const nameSpan = document.getElementById(`name-${userId}`);
     
-    nameSpan.innerText = `${appState.users[userId].name} ✏️`;
+    if (nameSpan) {
+      nameSpan.innerText = `${appState.users[userId].name} ✏️`;
+    }
 
     if (tab === 'bad') {
       container.classList.add('bad-mode'); toggle.classList.add('bad-mode'); memoSection.classList.add('bad-mode');
@@ -386,9 +385,9 @@
   function renderMemo(userId, tab, memoSection) {
     const board = appState.boards[userId][tab];
     
-    // 💡 엄격한 권한 분리 로직:
-    // 1. 좋아요 판(like): 해당 카드의 주인이 '나'일 때만 내가 작성/수정 가능 (내 판에 내가 바라는 것)
-    // 2. 나빠요 판(bad): 해당 카드의 주인이 '상대방'일 때만 내가 작성/수정 가능 (상대방 판에 내가 바라는 것)
+    // 권한 분리: 
+    // - 좋아요 판(like): 내 카드일 때만 내가 수정 가능 (내 바라는 것)
+    // - 나빠요 판(bad): 상대방 카드일 때만 내가 수정 가능 (상대방 판에 내가 바라는 것)
     const isMyCard = (userId === currentUserId);
     const canEdit = (tab === 'like' && isMyCard) || (tab === 'bad' && !isMyCard);
     const icon = tab === 'like' ? '✨' : '🔥';
@@ -415,26 +414,26 @@
     const board = appState.boards[userId][tab];
     document.getElementById(`memoSection-${userId}`).innerHTML = `
       <textarea class="memo-textarea" id="memoInput-${userId}" placeholder="내용을 입력하세요">${board.memo || ''}</textarea>
-      <div class="memo-btns"><button class="memo-edit-btn" onclick="renderBoard('${userId}')">취소</button><button class="memo-save-btn" onclick="saveMemo('${userId}', '${tab}')">저장</button></div>
+      <div class="memo-btns"><button class="memo-edit-btn" onclick="renderAll()">취소</button><button class="memo-save-btn" onclick="saveMemo('${userId}', '${tab}')">저장</button></div>
     `;
   }
 
   async function saveMemo(userId, tab) {
     appState.boards[userId][tab].memo = document.getElementById(`memoInput-${userId}`).value.trim();
     await saveCloudData();
-    renderBoard(userId);
+    renderAll();
   }
 
   async function deleteMemo(userId, tab) {
     if (!confirm('내용을 삭제하시겠습니까?')) return;
     appState.boards[userId][tab].memo = '';
     await saveCloudData();
-    renderBoard(userId);
+    renderAll();
   }
 
   function switchBoard(userId, tab) {
     appState.users[userId].activeTab = tab;
-    renderBoard(userId);
+    renderAll();
   }
 
   function handleGrapeClick(targetUserId, grapeIndex) {
@@ -512,7 +511,7 @@
     document.getElementById('termsModal').classList.add('active'); 
   }
   function closeTermsModal() { document.getElementById('termsModal').classList.remove('active'); }
-  function openArchiveModal() { filterArchive('user1'); document.getElementById('archiveModal').classList.add('active'); }
+  function openArchiveModal() { filterArchive(currentUserId); document.getElementById('archiveModal').classList.add('active'); }
   function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
   function filterArchive(userId) {
