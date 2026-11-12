@@ -169,7 +169,7 @@
   </div>
 </div>
 
-<!-- 스티커 상세 모달 -->
+<!-- 스티커 상세 모달 (현재 진행 중인 판용) -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <h3 id="detailTitle">🍇 스티커 정보</h3>
@@ -195,7 +195,7 @@
   </div>
 </div>
 
-<!-- 보관된 판 수정용 모달 -->
+<!-- 보관된 판 수정용 모달 (포도판 형태로 표시) -->
 <div class="modal-overlay" id="archiveEditModal">
   <div class="modal" style="max-width: 400px;">
     <div class="modal-header-flex">
@@ -213,13 +213,16 @@
   </div>
 </div>
 
-<!-- 보관된 판 내부 개별 스티커 상세/수정/삭제 모달 -->
-<div class="modal-overlay" id="archiveItemDetailModal">
+<!-- 보관된 판 내부 개별 스티커 수정/삭제 모달 -->
+<div class="modal-overlay" id="archiveItemModal">
   <div class="modal">
-    <h3 id="archiveItemModalTitle">🍇 스티커 정보</h3>
-    <div id="archiveItemDetailBody" style="margin-bottom:15px; line-height: 1.5; color:#555; font-size: 0.88rem;"></div>
+    <h3 id="archiveItemModalTitle">✏️ 보관된 스티커 수정</h3>
+    <div style="margin-bottom: 10px; font-size: 0.8rem; color: #888;" id="archiveItemDate">날짜: </div>
+    <textarea id="archiveItemReasonInput" placeholder="사유를 입력하세요" style="width:100%; height:80px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-bottom:10px; font-size:0.85rem; outline:none;"></textarea>
+    <div style="margin-bottom: 14px; font-size: 0.85rem; font-weight: 600; color: #555;">개수: <span id="archiveItemValText">1개</span></div>
     <div class="modal-btns" id="archiveItemModalBtns">
-      <button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>
+      <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
+      <button class="save" onclick="saveArchiveItemEdit()">저장</button>
     </div>
   </div>
 </div>
@@ -238,13 +241,10 @@
 
   const defaultTerms = [
     "하루에 스티커는 최대 3개까지만 줄 수 있어요.",
-    "한 가지 일에는 스티커 최대 1개만 줄 수 있어요.",
-    "안 준 스티커는 이월되지 않아요.",
-    "판 1개 완성 보상: 금전 5만 원 / 행위 4시간",
-    "좋아요 판 5개 완성 보상: 금전 15만 원 / 행위 24시간",
-    "나빠요 판 3개 완성 처벌: 금전 30만 원 / 행위 2주",
-    "1판 완성 보상 기한: 30일 (조율 가능)",
-    "N판 완성 보상 기한: 무기한",
+    "한 가지 일에는 최대 1개 스티커만 줄 수 있어요.",
+    "바라는 것의 금전적인 한도는 최대 3만 원이에요.",
+    "좋아요 완성 판 5개 모으면 한 달간 당신이 왕이에요!",
+    "안 준 스티커는 내일로 이월되지 않아요.",
     "사유를 잘못 적었을 땐 상대방 화면에서 언제든 수정/삭제가 가능해요."
   ];
 
@@ -262,8 +262,8 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null;
-  let currentEditingArchiveItem = null;
+  let editingArchiveTarget = null; // { userId, index }
+  let currentEditingArchiveSticker = null; // 보관함 내 수정 중인 개별 스티커 객체
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -874,6 +874,7 @@
     }
   }
 
+  // 보관함에서 포도판 열기 (수정 모드)
   function openArchiveEdit(userId, index) {
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
@@ -909,7 +910,8 @@
         if (filledType) {
           grape.classList.add(filledType, item.type);
           grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          grape.onclick = () => openArchiveItemDetail(itemData, index);
+          // 포도알 클릭 시 보관된 스티커 수정/삭제 모달 오픈
+          grape.onclick = () => openArchiveItemModal(itemData, index);
         } else {
           grape.innerText = grapeIndex + 1;
         }
@@ -927,40 +929,66 @@
     openArchiveModal();
   }
 
-  function openArchiveItemDetail(item, archiveIndex) {
-    currentEditingArchiveItem = item;
+  // 보관된 판 내부의 개별 스티커 수정/삭제 모달 열기
+  function openArchiveItemModal(item, archiveIndex) {
+    currentEditingArchiveSticker = item;
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
-    const isLatest = (index === archive.length - 1);
+    const isLatest = (index === archive.length - 1); // 가장 최근 완성된 직전 판인지 확인
 
-    document.getElementById('archiveItemModalTitle').innerText = '🍇 스티커 정보';
-    document.getElementById('archiveItemDetailBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
-    
+    document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}`;
+    document.getElementById('archiveItemReasonInput').value = item.reason;
+    document.getElementById('archiveItemValText').innerText = `${item.value}개`;
+
     const btnsDiv = document.getElementById('archiveItemModalBtns');
     if (isLatest) {
-      btnsDiv.innerHTML = `<button class="delete-btn" onclick="deleteArchiveStickerItem()">삭제하기</button><button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
+      // 직전 판일 때만 수정 + 삭제 버튼 모두 제공
+      btnsDiv.innerHTML = `
+        <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
+        <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
+        <button class="save" onclick="saveArchiveItemEdit()">저장</button>
+      `;
     } else {
-      btnsDiv.innerHTML = `<button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
+      // 그 이전 판들은 수정만 가능 (삭제 버튼 없음)
+      btnsDiv.innerHTML = `
+        <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
+        <button class="save" onclick="saveArchiveItemEdit()">저장</button>
+      `;
     }
 
-    document.getElementById('archiveItemDetailModal').classList.add('active');
+    document.getElementById('archiveItemModal').classList.add('active');
   }
 
-  function closeArchiveItemDetailModal() {
-    document.getElementById('archiveItemDetailModal').classList.remove('active');
+  function closeArchiveItemModal() {
+    document.getElementById('archiveItemModal').classList.remove('active');
   }
 
-  async function deleteArchiveStickerItem() {
-    if (!confirm('이 스티커를 삭제하시겠습니까? (직전 판의 스티커를 삭제하면 칸이 비워지거나 조정됩니다)')) return;
-    if (!editingArchiveTarget || !currentEditingArchiveItem) return;
+  // 보관된 스티커 사유 수정 저장
+  async function saveArchiveItemEdit() {
+    const newReason = document.getElementById('archiveItemReasonInput').value.trim();
+    if (!newReason) { alert('사유를 입력해주세요!'); return; }
+
+    currentEditingArchiveSticker.reason = newReason;
+    await saveCloudData();
+
+    closeArchiveItemModal();
+    // 포도판 모달을 갱신하기 위해 다시 오픈
+    openArchiveEdit(editingArchiveTarget.userId, editingArchiveTarget.index);
+    alert('수정되었습니다!');
+  }
+
+  // 직전 판의 보관된 스티커 삭제 (삭제 시 미완성 판이 되어 현재 진행 중인 판으로 복구됨)
+  async function deleteArchiveItem() {
+    if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 이 판이 미완성 상태가 되어 현재 진행 중인 판으로 되돌아갑니다!)')) return;
 
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveItem);
+    const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveSticker);
     if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
 
+    // 보관함에서 해당 항목 제거 후 현재 진행 중인 판에 합치기
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
     
@@ -973,7 +1001,7 @@
     activeBoard.currentVol = archivedBoard.vol;
 
     await saveCloudData();
-    closeArchiveItemDetailModal();
+    closeArchiveItemModal();
     closeArchiveEditModal();
     closeArchiveModal();
     renderAll();
