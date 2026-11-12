@@ -195,7 +195,7 @@
   </div>
 </div>
 
-<!-- 보관된 판 수정용 모달 (포도판 형태로 표시) -->
+<!-- 보관된 판 수정용 모달 -->
 <div class="modal-overlay" id="archiveEditModal">
   <div class="modal" style="max-width: 400px;">
     <div class="modal-header-flex">
@@ -311,8 +311,9 @@
 
     if (!appState.requests) appState.requests = [];
     
-    // 구조 안정화 체크 (누락된 보관함/볼륨 방어)
+    // 데이터 구조 엄격한 방어 코드
     ['user1', 'user2'].forEach(u => {
+      if (!appState.boards[u]) appState.boards[u] = {};
       ['like', 'bad'].forEach(t => {
         if (!appState.boards[u][t]) appState.boards[u][t] = { currentVol: 1, stickers: [], memo: '' };
         if (typeof appState.boards[u][t].currentVol !== 'number') appState.boards[u][t].currentVol = 1;
@@ -569,16 +570,22 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
-  // 💡 포도판 완성 및 새 판 생성 로직 강화
+  // 💡 포도판 완성 및 새 판 생성 로직 (완벽하게 안전하게 분리)
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
 
-    const tab = appState.users[selectedTargetUser].activeTab;
+    const targetUserObj = appState.users[selectedTargetUser];
+    const tab = targetUserObj.activeTab;
+    
+    if (!appState.boards[selectedTargetUser]) appState.boards[selectedTargetUser] = {};
+    if (!appState.boards[selectedTargetUser][tab]) {
+      appState.boards[selectedTargetUser][tab] = { currentVol: 1, stickers: [], memo: '' };
+    }
     const board = appState.boards[selectedTargetUser][tab];
+
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
-
     const today = new Date().toISOString().split('T')[0];
 
     if (tab === 'like') {
@@ -587,13 +594,13 @@
 
       board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId });
 
-      // 총합이 15 이상이면 판 완성 처리
       let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
       if (newTotal >= 15) {
         if (!Array.isArray(appState.boards[selectedTargetUser].archive)) {
           appState.boards[selectedTargetUser].archive = [];
         }
 
+        // 보관함에 완성된 판 저장
         appState.boards[selectedTargetUser].archive.push({
           vol: board.currentVol,
           type: tab,
@@ -602,7 +609,7 @@
           completedDate: today
         });
 
-        // 새로운 판으로 확실하게 리셋 및 볼륨 증가
+        // 새 판으로 완전 초기화 및 Vol 증가
         board.currentVol += 1;
         board.stickers = [];
         board.memo = '';
@@ -721,7 +728,12 @@
     const req = (appState.requests || []).find(r => r.id === reqId);
     if (!req) return;
 
+    if (!appState.boards[currentUserId]) appState.boards[currentUserId] = {};
+    if (!appState.boards[currentUserId][req.type]) {
+      appState.boards[currentUserId][req.type] = { currentVol: 1, stickers: [], memo: '' };
+    }
     const board = appState.boards[currentUserId][req.type];
+
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
 
@@ -875,6 +887,10 @@
 
     const latest = archive.pop();
     const activeTab = latest.type;
+    
+    if (!appState.boards[userId][activeTab]) {
+      appState.boards[userId][activeTab] = { currentVol: 1, stickers: [], memo: '' };
+    }
     const activeBoard = appState.boards[userId][activeTab];
 
     activeBoard.stickers = [...latest.stickers, ...activeBoard.stickers];
@@ -912,7 +928,7 @@
         let accumulated = 0, filledType = null, itemData = null;
         for (let st of item.stickers) {
           accumulated += st.value;
-          if (accumulated - st.value < grapeIndex + 1 && accumulated > grapeIndex) {
+          if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
             itemData = st;
             filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
           }
@@ -963,6 +979,10 @@
 
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
+    
+    if (!appState.boards[userId][activeTab]) {
+      appState.boards[userId][activeTab] = { currentVol: 1, stickers: [], memo: '' };
+    }
     const activeBoard = appState.boards[userId][activeTab];
 
     activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
