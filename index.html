@@ -23,11 +23,9 @@
     body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; }
     .container { max-width: 900px; margin: 0 auto; }
     
-    /* 💡 모바일 화면에서 버튼들이 길어져서 벗어나지 않도록 세로 정렬/줄바꿈 적용 */
     header { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 18px; padding: 0 4px; gap: 10px; }
     header h1 { font-size: 1.35rem; color: #ff6b81; font-weight: 800; }
     .top-btns { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; justify-content: flex-start; }
-    
     .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); white-space: nowrap; position: relative; }
     
     .badge-dot { position: absolute; top: -3px; right: -3px; background: #ff6b81; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
@@ -219,7 +217,7 @@
 <div class="modal-overlay" id="archiveItemModal">
   <div class="modal">
     <h3 id="archiveItemModalTitle">✏️ 보관된 스티커 수정</h3>
-    <div style="margin-bottom: 10px; font-size: 0.8rem; color: #888;" id="archiveItemDate">날짜: </div>
+    <div style="margin-bottom: 10px; font-size: 0.80rem; color: #888;" id="archiveItemDate">날짜: </div>
     <textarea id="archiveItemReasonInput" placeholder="사유를 입력하세요" style="width:100%; height:80px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-bottom:10px; font-size:0.85rem; outline:none;"></textarea>
     <div style="margin-bottom: 14px; font-size: 0.85rem; font-weight: 600; color: #555;">개수: <span id="archiveItemValText">1개</span></div>
     <div class="modal-btns" id="archiveItemModalBtns">
@@ -266,7 +264,7 @@
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
   let editingArchiveTarget = null;
   let currentEditingArchiveSticker = null;
-  let isRequestMode = false; // 내 판에 스티커 달라고 요청하는 모드인지 여부
+  let isRequestMode = false;
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -383,7 +381,8 @@
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
     
     if (isMyCard) {
-      let requestBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal('${userId}')" title="내 판에 좋아요 스티커 요청하기">🙋‍♀️</button>` : ``;
+      // 내 판 카드일 때는 찌르기(요청하기) 버튼을 제공하여 내 판에 채워달라고 요청 가능
+      let requestBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="내 판에 좋아요 스티커 요청하기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
           ${requestBtnHtml}
@@ -391,7 +390,7 @@
         </div>
       `;
     } else {
-      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>` : ``;
+      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="내 판에 좋아요 스티커 요청하기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
           ${pokeBtnHtml}
@@ -554,17 +553,18 @@
     renderAll();
   }
 
-  // 내 판에 좋아요 달라고 요청하는 모달 열기
-  function openRequestModal(myUserId) {
+  // 💡 찌르기(요청하기) 모달 열기: 1개/0.5개 선택창과 사유 입력창 표시
+  function openRequestModal() {
     isRequestMode = true;
-    selectedTargetUser = (myUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청 보냄
-    const board = appState.boards[myUserId]['like'];
+    selectedTargetUser = (currentUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청 전송
+    
+    const board = appState.boards[currentUserId]['like'];
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
 
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); isRequestMode = false; return; }
 
     selectedVal = 1;
-    document.getElementById('modalTitle').innerText = '🙋‍♀️ 내 판에 좋아요 스티커 요청';
+    document.getElementById('modalTitle').innerText = '👉 내 판에 좋아요 스티커 찌르기(요청)';
     document.getElementById('stickerReason').value = '';
 
     const btn05 = document.getElementById('val-05');
@@ -627,12 +627,12 @@
         reason: reason,
         date: today,
         status: 'pending',
-        isRequest: true // 내 판에 달라고 요청한 것
+        isRequest: true
       });
 
       await saveCloudData();
       updateRequestBadge();
-      alert('상대방에게 좋아요 스티커 달라고 요청을 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
+      alert('상대방에게 좋아요 찌르기(요청)를 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
       closeAddModal();
       return;
     }
@@ -704,29 +704,6 @@
     closeAddModal();
   }
 
-  async function pokeUser(targetUserId) {
-    const reason = prompt('어떤 일로 찌르시나요? (좋아요 요청 사유 입력)');
-    if (!reason || reason.trim() === '') return;
-
-    const today = new Date().toISOString().split('T')[0];
-    if (!appState.requests) appState.requests = [];
-    
-    appState.requests.push({
-      id: Date.now(),
-      from: currentUserId,
-      to: targetUserId,
-      type: 'like',
-      value: 1,
-      reason: `[찌르기] ${reason.trim()}`,
-      date: today,
-      status: 'pending'
-    });
-
-    await saveCloudData();
-    updateRequestBadge();
-    alert('상대방에게 좋아요 요청을 찔렀습니다! 👆');
-  }
-
   function showStickerDetail(targetUserId, item, tab) {
     if (!item) return;
     currentActiveItem = item; currentActiveTargetUser = targetUserId; currentActiveTab = tab;
@@ -768,7 +745,7 @@
         card.className = `request-card ${req.type}`;
         card.innerHTML = `
           <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
-            <span>${fromName}님의 ${req.isRequest ? '🙋‍♀️ [내 판에 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
+            <span>${fromName}님의 ${req.isRequest ? '👉 [찌르기 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
             <span style="font-size:0.75rem; color:#888;">${req.date}</span>
           </div>
           <p style="font-size:0.83rem; color:#555; margin-bottom:10px; word-break:break-all;">"${req.reason}"</p>
@@ -788,7 +765,6 @@
     const req = (appState.requests || []).find(r => r.id === reqId);
     if (!req) return;
 
-    // 만약 내가 내 판에 달라고 요청한 것이었다면 '내 판(currentUserId)'에 스티커가 쌓임
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
     const reqType = req.isRequest ? 'like' : req.type;
 
@@ -809,7 +785,7 @@
       reason: req.reason, 
       date: req.date, 
       from: req.isRequest ? currentUserId : req.from,
-      isRequest: true // [요청] 마크 부여
+      isRequest: true 
     });
 
     let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
