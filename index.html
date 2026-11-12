@@ -96,7 +96,6 @@
     .request-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
     .request-card.bad { background: var(--bad-soft); border-color: var(--bad-border); }
     
-    /* 보관함 카드 아코디언 스타일 */
     .archive-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
     .archive-card-header { font-weight: 700; color: #4a4a4a; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; cursor: pointer; }
     .archive-body { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ffd1dc; display: none; }
@@ -243,7 +242,7 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null; // { userId, archiveIndex }
+  let editingArchiveTarget = null;
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -349,7 +348,6 @@
     
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>`;
     if (isOtherCard) {
-      // 나빠요 탭일 때는 찌르기(👉) 버튼 숨기기
       let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
@@ -480,7 +478,7 @@
       }
     } else {
       if (canEdit) {
-        displaySpan.innerHTML = `<span style="color:#aaa; cursor:pointer; font-weight:normal;" onclick="editMemo('${userId}', '${tab}')">${tab === 'like' ? '내가 바라는 것은자인가요?' : '상대가 바라는 것은?'}</span>`;
+        displaySpan.innerHTML = `<span style="color:#aaa; cursor:pointer; font-weight:normal;" onclick="editMemo('${userId}', '${tab}')">${tab === 'like' ? '내가 바라는 것은?' : '상대가 바라는 것은?'}</span>`;
       } else {
         displaySpan.innerHTML = `<span style="color:#aaa; font-weight:normal;">등록된 내용이 없습니다.</span>`;
       }
@@ -518,27 +516,19 @@
     const tab = appState.users[targetUserId].activeTab;
     const board = appState.boards[targetUserId][tab];
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
-    let maxAllowed = 15 - currentTotal;
 
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
 
-    selectedVal = 1; // 기본값 1개 고정
+    selectedVal = 1;
 
     document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 💔';
     document.getElementById('stickerReason').value = '';
 
     const btn05 = document.getElementById('val-05');
     const btn1 = document.getElementById('val-1');
+    btn1.style.display = 'block';
     btn1.className = 'selected';
     btn05.className = '';
-
-    if (maxAllowed < 1) {
-      btn1.style.display = 'none';
-      btn05.className = 'selected';
-      selectedVal = 0.5;
-    } else {
-      btn1.style.display = 'block';
-    }
 
     document.getElementById('addModal').classList.add('active');
   }
@@ -550,7 +540,6 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
-  // 💡 14.5개일 때 1개 주면 초과분이 다음 판으로 이월되는 로직 반영
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
@@ -560,27 +549,20 @@
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
 
-    if (selectedVal > maxAllowed + 0.001) {
-      alert(`남은 칸이 ${maxAllowed}개이므로 해당 개수만큼만 부여할 수 있습니다!`);
-      return;
-    }
-
     const today = new Date().toISOString().split('T')[0];
 
     if (tab === 'like') {
       let firstPart = maxAllowed >= selectedVal ? selectedVal : maxAllowed;
-      let secondPart = selectedVal - firstPart; // 초과분
+      let secondPart = selectedVal - firstPart;
 
       board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId });
 
-      // 현재 판이 완성되었다면 보관함으로 이관 후 새 판 시작
       if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
         appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
         board.currentVol += 1; 
         board.stickers = []; 
         board.memo = '';
 
-        // 초과분이 있다면 다음 판(새 Vol)에 바로 추가!
         if (secondPart > 0) {
           board.stickers.push({ value: secondPart, reason: `${reason} (이월)`, date: today, from: currentUserId });
         }
@@ -793,7 +775,6 @@
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
-      // 가장 최근(마지막) 판인지 확인 (직전 판 삭제 허용용)
       const isLatest = (index === archive.length - 1);
       const card = document.createElement('div');
       card.className = 'archive-card';
@@ -827,20 +808,18 @@
     }
   }
 
-  // 💡 직전 판 복구(삭제하여 현재 판으로 되돌리기) 기능
   async function restoreLatestArchive(userId) {
     const archive = appState.boards[userId].archive;
     if (archive.length === 0) return;
 
     if (!confirm('가장 최근에 완성된 이 포도판을 보관함에서 지우고, 다시 진행 중인 판으로 불러오시겠습니까? (현재 진행 중이던 판의 스티커와 합쳐집니다)')) return;
 
-    const latest = archive.pop(); // 보관함에서 마지막 항목 제거
+    const latest = archive.pop();
     const activeTab = latest.type;
     const activeBoard = appState.boards[userId][activeTab];
 
-    // 기존 진행 중이던 스티커와 합치기
     activeBoard.stickers = [...latest.stickers, ...activeBoard.stickers];
-    activeBoard.currentVol = latest.vol; // 볼륨 번호 복원
+    activeBoard.currentVol = latest.vol;
 
     await saveCloudData();
     renderAll();
@@ -848,7 +827,6 @@
     alert('포도판이 성공적으로 복구되었습니다!');
   }
 
-  // 💡 보관된 판 스티커 수정 기능 (전전전~ 언제든 수정 가능)
   function openArchiveEdit(userId, index) {
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
@@ -869,7 +847,7 @@
   }
 
   function closeArchiveEditModal() {
-    document.getElementById('archiveEditModal').classList.remove('archiveModal') || document.getElementById('archiveEditModal').classList.remove('active');
+    document.getElementById('archiveEditModal').classList.remove('active');
   }
 
   async function saveArchiveEdit() {
@@ -886,7 +864,7 @@
 
     await saveCloudData();
     closeArchiveEditModal();
-    openArchiveModal(); // 보관함 창 새로고침
+    openArchiveModal();
     alert('수정되었습니다!');
   }
 </script>
