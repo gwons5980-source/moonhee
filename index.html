@@ -195,7 +195,7 @@
   </div>
 </div>
 
-<!-- 보관된 판 수정용 모달 -->
+<!-- 보관된 판 수정용 모달 (포도판 형태로 표시) -->
 <div class="modal-overlay" id="archiveEditModal">
   <div class="modal" style="max-width: 400px;">
     <div class="modal-header-flex">
@@ -213,13 +213,12 @@
   </div>
 </div>
 
-<!-- 보관된 판 내부 개별 스티커 상세/삭제 모달 -->
+<!-- 보관된 판 내부 개별 스티커 상세/수정/삭제 모달 -->
 <div class="modal-overlay" id="archiveItemDetailModal">
   <div class="modal">
-    <h3>🍇 스티커 정보</h3>
+    <h3 id="archiveItemModalTitle">🍇 스티커 정보</h3>
     <div id="archiveItemDetailBody" style="margin-bottom:15px; line-height: 1.5; color:#555; font-size: 0.88rem;"></div>
-    <div class="modal-btns">
-      <button class="delete-btn" onclick="deleteArchiveStickerItem()">삭제하기</button>
+    <div class="modal-btns" id="archiveItemModalBtns">
       <button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>
     </div>
   </div>
@@ -260,7 +259,7 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null;
+  let editingArchiveTarget = null; // { userId, index }
   let currentEditingArchiveItem = null;
 
   window.onload = async function() {
@@ -311,7 +310,6 @@
 
     if (!appState.requests) appState.requests = [];
     
-    // 데이터 구조 엄격한 방어 코드
     ['user1', 'user2'].forEach(u => {
       if (!appState.boards[u]) appState.boards[u] = {};
       ['like', 'bad'].forEach(t => {
@@ -570,7 +568,6 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
-  // 💡 포도판 완성 및 새 판 생성 로직 (완벽하게 안전하게 분리)
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
@@ -600,7 +597,6 @@
           appState.boards[selectedTargetUser].archive = [];
         }
 
-        // 보관함에 완성된 판 저장
         appState.boards[selectedTargetUser].archive.push({
           vol: board.currentVol,
           type: tab,
@@ -609,7 +605,6 @@
           completedDate: today
         });
 
-        // 새 판으로 완전 초기화 및 Vol 증가
         board.currentVol += 1;
         board.stickers = [];
         board.memo = '';
@@ -845,7 +840,6 @@
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
-      const isLatest = (index === archive.length - 1);
       const card = document.createElement('div');
       card.className = 'archive-card';
       card.innerHTML = `
@@ -853,7 +847,6 @@
           <span onclick="toggleArchiveBody(${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
           <div style="display:flex; gap:6px; align-items:center;">
             <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="포도판 형태로 수정">✏️</button>
-            ${isLatest ? `<button class="memo-del-btn" style="padding:3px 8px; font-size:0.7rem;" onclick="restoreLatestArchive('${userId}')">판 복구하기</button>` : ''}
             <span onclick="toggleArchiveBody(${index})" style="font-size:0.85rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${index}">▼</span>
           </div>
         </div>
@@ -876,30 +869,6 @@
       body.classList.add('open');
       toggleText.innerText = '▲';
     }
-  }
-
-  async function restoreLatestArchive(userId) {
-    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
-    const archive = appState.boards[userId].archive;
-    if (archive.length === 0) return;
-
-    if (!confirm('가장 최근에 완성된 이 포도판을 보관함에서 지우고, 다시 진행 중인 판으로 불러오시겠습니까? (현재 진행 중이던 판의 스티커와 합쳐집니다)')) return;
-
-    const latest = archive.pop();
-    const activeTab = latest.type;
-    
-    if (!appState.boards[userId][activeTab]) {
-      appState.boards[userId][activeTab] = { currentVol: 1, stickers: [], memo: '' };
-    }
-    const activeBoard = appState.boards[userId][activeTab];
-
-    activeBoard.stickers = [...latest.stickers, ...activeBoard.stickers];
-    activeBoard.currentVol = latest.vol;
-
-    await saveCloudData();
-    renderAll();
-    closeArchiveModal();
-    alert('포도판이 성공적으로 복구되었습니다!');
   }
 
   function openArchiveEdit(userId, index) {
@@ -937,7 +906,7 @@
         if (filledType) {
           grape.classList.add(filledType, item.type);
           grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          grape.onclick = () => openArchiveItemDetail(itemData);
+          grape.onclick = () => openArchiveItemDetail(itemData, index);
         } else {
           grape.innerText = grapeIndex + 1;
         }
@@ -955,9 +924,24 @@
     openArchiveModal();
   }
 
-  function openArchiveItemDetail(item) {
+  function openArchiveItemDetail(item, archiveIndex) {
     currentEditingArchiveItem = item;
+    const { userId, index } = editingArchiveTarget;
+    const archive = appState.boards[userId].archive;
+    const isLatest = (index === archive.length - 1); // 가장 최근 직전 판인지 확인
+
+    document.getElementById('archiveItemModalTitle').innerText = '🍇 스티커 정보';
     document.getElementById('archiveItemDetailBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
+    
+    const btnsDiv = document.getElementById('archiveItemModalBtns');
+    if (isLatest) {
+      // 직전 판일 때만 삭제 버튼 노출
+      btnsDiv.innerHTML = `<button class="delete-btn" onclick="deleteArchiveStickerItem()">삭제하기</button><button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
+    } else {
+      // 전전전 판 등은 수정/삭제 불가 안내 또는 닫기만
+      btnsDiv.innerHTML = `<button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
+    }
+
     document.getElementById('archiveItemDetailModal').classList.add('active');
   }
 
@@ -966,17 +950,17 @@
   }
 
   async function deleteArchiveStickerItem() {
-    if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 판이 미완성 상태가 되어 현재 진행 중인 판으로 복구됩니다!)')) return;
+    if (!confirm('이 스티커를 삭제하시겠습니까? (직전 판의 스티커를 삭제하면 칸이 비워지거나 조정됩니다)')) return;
     if (!editingArchiveTarget || !currentEditingArchiveItem) return;
 
     const { userId, index } = editingArchiveTarget;
-    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
     const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveItem);
     if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
 
+    // 스티커가 삭제되어 15개 미만이 되면 자동으로 현재 진행 판으로 복구되도록 처리
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
     
@@ -993,7 +977,7 @@
     closeArchiveEditModal();
     closeArchiveModal();
     renderAll();
-    alert('스티커가 삭제되고 해당 판이 현재 진행 판으로 복구되었습니다!');
+    alert('스티커가 삭제되어 해당 판이 현재 진행 중인 판으로 되돌아왔습니다!');
   }
 </script>
 </body>
