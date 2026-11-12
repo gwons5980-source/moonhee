@@ -2,2125 +2,519 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>🍇 문희사항 · 우리 둘만의 포도알 🍇</title>
-  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🍇 문희사항 🍇</title>
+  <!-- Supabase JS SDK 불러오기 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg-color: #fff9fb;
       --card-bg: #ffffff;
       --text-color: #4a4a4a;
-
-      /* 좋아요 핑크 테마 */
       --pink-main: #ffb6c1;
       --pink-soft: #fff0f5;
       --pink-dark: #ff8da1;
-      --pink-accent: #ff6b81;
       --border-color: #ffe4e1;
-
-      /* 나빠요 슬레이트 블루 테마 */
       --bad-color: #a1b5cc;
       --bad-soft: #f0f3f7;
-      --bad-dark: #5b7bb2;
       --bad-border: #d4dce6;
-
-      --border-radius: 26px;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    html, body {
-      width: 100%;
-      overflow-x: hidden;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      min-height: 100dvh;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-
-    /* 아이폰 사파리 입력 시 자동 확대(Auto-zoom) 방지 (16px 이상 유지) */
-    input, textarea {
-      font-size: 16px !important;
-    }
-    @media (min-width: 768px) {
-      input, textarea {
-        font-size: 0.9rem !important;
-      }
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    /* =========================================
-       1. 로딩 / 로그인 / 자리 선택 화면
-       ========================================= */
-    .center-screen {
-      min-height: 100dvh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px 16px;
-    }
-
-    .auth-card {
-      width: 100%;
-      max-width: 400px;
-      background: var(--card-bg);
-      border-radius: 30px;
-      padding: 30px 24px;
-      border: 1.5px solid var(--border-color);
-      box-shadow: 0 16px 40px rgba(255, 182, 193, 0.2);
-    }
-
-    .auth-logo {
-      width: 62px;
-      height: 62px;
-      border-radius: 22px;
-      background: var(--pink-soft);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.9rem;
-      margin: 0 auto 12px;
-      box-shadow: inset 0 2px 8px rgba(255, 141, 161, 0.18);
-    }
-
-    .auth-title {
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--pink-accent);
-      letter-spacing: -0.5px;
-    }
-
-    .auth-sub {
-      text-align: center;
-      font-size: 0.82rem;
-      color: #777;
-      line-height: 1.55;
-      margin-top: 6px;
-      margin-bottom: 22px;
-    }
-
-    .auth-tabs {
-      display: flex;
-      background: var(--pink-soft);
-      padding: 4px;
-      border-radius: 16px;
-      margin-bottom: 18px;
-    }
-
-    .auth-tabs button {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 10px;
-      border-radius: 13px;
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #999;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .auth-tabs button.active {
-      background: #ffffff;
-      color: var(--pink-accent);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #555;
-      margin-bottom: 6px;
-      padding-left: 4px;
-    }
-
-    .form-input {
-      width: 100%;
-      padding: 13px 15px;
-      border-radius: 16px;
-      border: 1.5px solid var(--border-color);
-      background: #fff9fb;
-      color: #333;
-      outline: none;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    .form-input:focus {
-      border-color: var(--pink-dark);
-      background: #ffffff;
-    }
-
-    .auth-error {
-      background: #fff0f3;
-      color: #e11d48;
-      font-size: 0.8rem;
-      font-weight: 600;
-      padding: 10px 14px;
-      border-radius: 12px;
-      margin-bottom: 14px;
-      line-height: 1.4;
-    }
-
-    .primary-btn {
-      width: 100%;
-      padding: 15px;
-      border: none;
-      border-radius: 16px;
-      background: var(--pink-dark);
-      color: #ffffff;
-      font-size: 0.95rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow: 0 6px 18px rgba(255, 141, 161, 0.38);
-      transition: transform 0.15s, background 0.2s;
-    }
-
-    .primary-btn:hover {
-      background: var(--pink-accent);
-    }
-
-    .primary-btn:active {
-      transform: scale(0.98);
-    }
-
-    .primary-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .slot-btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 18px;
-      border: 2px solid var(--pink-main);
-      background: var(--pink-soft);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      text-align: left;
-      cursor: pointer;
-      margin-bottom: 12px;
-      transition: transform 0.15s, box-shadow 0.2s;
-    }
-
-    .slot-btn.blue {
-      border-color: var(--bad-color);
-      background: var(--bad-soft);
-    }
-
-    .slot-btn:not(:disabled):active {
-      transform: scale(0.98);
-    }
-
-    .slot-btn:disabled {
-      border-color: #e5e7eb;
-      background: #f9fafb;
-      opacity: 0.65;
-      cursor: not-allowed;
-    }
-
-    /* =========================================
-       2. 메인 포도알 앱 레이아웃 (PC & 모바일 최적화)
-       ========================================= */
-    .container {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 14px 12px 52px;
-    }
-
-    @media (min-width: 768px) {
-      .container {
-        padding: 24px 20px 64px;
-      }
-    }
-
-    header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(255, 249, 251, 0.94);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 4px;
-      margin-bottom: 14px;
-      border-bottom: 1px solid rgba(255, 228, 225, 0.85);
-    }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    header h1 {
-      font-size: 1.45rem;
-      color: var(--pink-accent);
-      font-weight: 800;
-      letter-spacing: -0.5px;
-    }
-
-    @media (min-width: 768px) {
-      header h1 {
-        font-size: 1.7rem;
-      }
-    }
-
-    .user-badge {
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: var(--pink-accent);
-      background: var(--pink-soft);
-      border: 1px solid var(--border-color);
-      padding: 5px 11px;
-      border-radius: 999px;
-    }
-
-    .top-btns {
-      display: flex;
-      gap: 6px;
-    }
-
-    .top-btn {
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      padding: 7px 12px;
-      border-radius: 16px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: #555;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(255, 182, 193, 0.15);
-      transition: transform 0.15s, background 0.2s;
-    }
-
-    .top-btn:hover {
-      background: var(--pink-soft);
-    }
-
-    .top-btn:active {
-      transform: scale(0.95);
-    }
-
-    .top-btn.logout {
-      background: var(--pink-soft);
-      color: var(--pink-accent);
-      border-color: #ffd6e0;
-    }
-
-    /* 권한 및 규칙 안내 배너 */
-    .rule-banner {
-      background: #ffffff;
-      border: 1px solid var(--border-color);
-      border-radius: 18px;
-      padding: 12px 16px;
-      margin-bottom: 16px;
-      font-size: 0.78rem;
-      color: #555;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      box-shadow: 0 3px 12px rgba(255, 182, 193, 0.08);
-    }
-
-    @media (min-width: 768px) {
-      .rule-banner {
-        flex-direction: row;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.82rem;
-        padding: 12px 20px;
-      }
-    }
-
-    /* 모바일 전용 보기 전환 탭 (767px 이하에서만 표시) */
-    .mobile-switcher {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-      background: #ffffff;
-      padding: 6px;
-      border-radius: 20px;
-      border: 1px solid var(--border-color);
-      margin-bottom: 18px;
-      box-shadow: 0 4px 14px rgba(255, 182, 193, 0.12);
-    }
-
-    @media (min-width: 768px) {
-      .mobile-switcher {
-        display: none;
-      }
-    }
-
-    .mobile-switcher button {
-      border: none;
-      background: transparent;
-      padding: 9px 4px;
-      border-radius: 14px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: #777;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .mobile-switcher button.active {
-      background: var(--pink-dark);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(255, 141, 161, 0.35);
-    }
-
-    /* 듀얼 포도판 그리드: 모바일 1열 / PC 2열 나란히 */
-    .dual-board {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 22px;
-    }
-
-    @media (min-width: 768px) {
-      .dual-board {
-        grid-template-columns: 1fr 1fr;
-        gap: 26px;
-      }
-    }
-
-    /* 모바일에서 선택되지 않은 카드 숨김 (PC에서는 항상 둘 다 표시) */
-    @media (max-width: 767px) {
-      .user-card.mobile-hidden {
-        display: none;
-      }
-    }
-
-    .user-card {
-      background: var(--card-bg);
-      border-radius: var(--border-radius);
-      padding: 22px 18px;
-      border: 1px solid var(--border-color);
-      box-shadow: 0 12px 32px rgba(255, 182, 193, 0.14);
-    }
-
-    @media (min-width: 768px) {
-      .user-card {
-        padding: 26px 24px;
-      }
-    }
-
-    .user-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--pink-soft);
-      gap: 8px;
-    }
-
-    .user-name-wrap {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .user-name {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: #333;
-    }
-
-    .role-pill {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 3px 9px;
-      border-radius: 999px;
-    }
-
-    .role-pill.mine {
-      background: var(--pink-soft);
-      color: var(--pink-accent);
-    }
-
-    .role-pill.partner {
-      background: #ecfdf5;
-      color: #059669;
-    }
-
-    .edit-name-btn {
-      background: #f5f5f7;
-      border: none;
-      padding: 5px 11px;
-      border-radius: 12px;
-      font-size: 0.74rem;
-      font-weight: 700;
-      color: #666;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-
-    .board-toggle {
-      display: flex;
-      background: var(--pink-soft);
-      border-radius: 16px;
-      padding: 4px;
-      margin-bottom: 14px;
-      transition: background 0.2s;
-    }
-
-    .board-toggle.bad-mode {
-      background: var(--bad-soft);
-    }
-
-    .board-toggle button {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 9px;
-      border-radius: 13px;
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #888;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .board-toggle button.active.like {
-      background: #ffffff;
-      color: var(--pink-dark);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    }
-
-    .board-toggle button.active.bad {
-      background: #ffffff;
-      color: var(--bad-dark);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    }
-
-    .board-status {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #888;
-      margin-bottom: 14px;
-      padding: 0 4px;
-    }
-
-    /* 5-4-3-2-1 포도송이 컨테이너 */
-    .grape-container {
-      background: var(--pink-soft);
-      border-radius: 22px;
-      padding: 24px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      transition: background 0.25s;
-    }
-
-    .grape-container.bad-mode {
-      background: var(--bad-soft);
-    }
-
-    .grape-row {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-    }
-
-    @media (min-width: 768px) {
-      .grape-row {
-        gap: 10px;
-      }
-    }
-
-    .grape-grape {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: #ffffff;
-      border: 1.5px dashed #ffd1dc;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.84rem;
-      font-weight: 700;
-      color: #bbb;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.14s ease, box-shadow 0.2s, border-color 0.2s;
-      user-select: none;
-    }
-
-    @media (min-width: 768px) {
-      .grape-grape {
-        width: 52px;
-        height: 52px;
-        font-size: 0.88rem;
-      }
-      .grape-grape:not(.own-empty):hover {
-        transform: translateY(-2px) scale(1.06);
-        border-color: var(--pink-dark);
-      }
-      .grape-container.bad-mode .grape-grape:not(.own-empty):hover {
-        border-color: var(--bad-dark);
-      }
-    }
-
-    .grape-container.bad-mode .grape-grape {
-      border: 1.5px dashed var(--bad-border);
-    }
-
-    .grape-grape:active {
-      transform: scale(0.92);
-    }
-
-    .grape-grape.own-empty {
-      cursor: default;
-      opacity: 0.75;
-    }
-    .grape-grape.own-empty:active {
-      transform: none;
-    }
-
-    .grape-grape svg {
-      width: 82%;
-      height: 82%;
-      display: block;
-    }
-
-    .grape-grape.full {
-      border: none;
-    }
-
-    .grape-grape.full.like {
-      background: var(--pink-main);
-      box-shadow: 0 4px 10px rgba(255, 182, 193, 0.5);
-    }
-
-    .grape-grape.full.bad {
-      background: var(--bad-color);
-      box-shadow: 0 4px 10px rgba(161, 181, 204, 0.45);
-    }
-
-    .grape-grape.half.like {
-      background: linear-gradient(90deg, var(--pink-main) 50%, #ffffff 50%);
-      border: 1.5px solid var(--pink-main);
-    }
-
-    .grape-grape.half.bad {
-      background: linear-gradient(90deg, var(--bad-color) 50%, #ffffff 50%);
-      border: 1.5px solid var(--bad-color);
-    }
-
-    /* 다 모으면 (바라는 것) 메모 섹션 */
-    .memo-section {
-      margin-top: 16px;
-      background: #faf8f9;
-      border-radius: 16px;
-      padding: 14px 16px;
-      border: 1px dashed #e6d2d7;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .memo-section.bad-mode {
-      background: #f4f6f9;
-      border-color: #cbd5e1;
-    }
-
-    .memo-role-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #888;
-      margin-bottom: 5px;
-    }
-
-    .memo-line {
-      font-size: 0.86rem;
-      font-weight: 700;
-      color: #444;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-      word-break: break-word;
-    }
-
-    .memo-textarea {
-      width: 100%;
-      height: 62px;
-      padding: 10px 12px;
-      border: 1.5px solid var(--border-color);
-      border-radius: 12px;
-      resize: none;
-      outline: none;
-      margin-bottom: 8px;
-      background: #ffffff;
-    }
-
-    .memo-textarea:focus {
-      border-color: var(--pink-dark);
-    }
-
-    .memo-btns {
-      display: flex;
-      gap: 6px;
-      justify-content: flex-end;
-      flex-shrink: 0;
-    }
-
-    .memo-btns button {
-      padding: 5px 10px;
-      border: none;
-      border-radius: 9px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
+      --border-radius: 24px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding: 20px 12px; min-height: 100vh; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 4px; }
+    header h1 { font-size: 1.5rem; color: #ff6b81; font-weight: 800; }
+    .top-btns { display: flex; gap: 6px; }
+    .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); }
+    
+    /* 로그인 오버레이 화면 */
+    .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,249,251,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: white; padding: 30px 24px; border-radius: 28px; width: 100%; max-width: 380px; box-shadow: 0 15px 35px rgba(255,182,193,0.2); border: 1px solid var(--border-color); text-align: center; }
+    .auth-card h2 { color: #ff6b81; font-size: 1.4rem; margin-bottom: 8px; }
+    .auth-card p { font-size: 0.85rem; color: #888; margin-bottom: 20px; }
+    .auth-input { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 12px; font-size: 0.9rem; outline: none; }
+    .auth-input:focus { border-color: var(--pink-main); }
+    .auth-btn { width: 100%; padding: 12px; background: var(--pink-main); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
+    .auth-switch { font-size: 0.8rem; color: #666; cursor: pointer; margin-top: 10px; display: inline-block; }
+
+    .dual-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+    .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); }
+    .user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--pink-soft); }
+    .user-name { font-size: 1.15rem; font-weight: 700; color: #333; }
+    .board-toggle { display: flex; background: var(--pink-soft); border-radius: 16px; padding: 3px; margin-bottom: 14px; }
+    .board-toggle.bad-mode { background: var(--bad-soft); }
+    .board-toggle button { flex: 1; border: none; background: transparent; padding: 7px; border-radius: 13px; font-size: 0.85rem; font-weight: 600; color: #888; cursor: pointer; }
+    .board-toggle button.active.like { background: white; color: var(--pink-dark); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .board-toggle button.active.bad { background: white; color: #5b7bb2; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+    .board-status { display: flex; justify-content: space-between; font-size: 0.85rem; color: #888; margin-bottom: 16px; padding: 0 4px; }
+    .grape-container { background: var(--pink-soft); border-radius: 20px; padding: 22px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .grape-container.bad-mode { background: var(--bad-soft); }
+    .grape-row { display: flex; gap: 8px; }
+    .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; cursor: pointer; position: relative; overflow: hidden; }
+    .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
+    .grape-grape svg { width: 82%; height: 82%; display: block; }
+    .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
+    .grape-grape.full.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
+    .memo-section { margin-top: 16px; background: #faf8f9; border-radius: 14px; padding: 12px 14px; border: 1px dashed #e6d2d7; }
+    .memo-section.bad-mode { background: #f4f6f9; border-color: #cbd5e1; }
+    .memo-line { font-size: 0.85rem; font-weight: 600; color: #444; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
+    .memo-textarea { width: 100%; height: 50px; padding: 8px; border: 1px solid #ccc; border-radius: 10px; font-size: 0.85rem; resize: none; outline: none; margin-bottom: 6px; }
+    .memo-btns { display: flex; gap: 6px; justify-content: flex-end; }
+    .memo-btns button { padding: 4px 10px; border: none; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .memo-edit-btn { background: #e2e8f0; color: #475569; }
-    .memo-save-btn { background: var(--pink-dark); color: #ffffff; }
-    .memo-del-btn { background: var(--pink-accent); color: #ffffff; }
-
-    /* =========================================
-       3. 모달 (모바일 바텀시트 / PC 중앙 팝업)
-       ========================================= */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.38);
-      backdrop-filter: blur(3px);
-      -webkit-backdrop-filter: blur(3px);
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-
-    @media (min-width: 640px) {
-      .modal-overlay {
-        align-items: center;
-        padding: 16px;
-      }
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal {
-      background: #ffffff;
-      border-radius: 28px 28px 0 0;
-      padding: 22px 20px calc(24px + env(safe-area-inset-bottom));
-      width: 100%;
-      max-height: 85dvh;
-      overflow-y: auto;
-      box-shadow: 0 -12px 38px rgba(0, 0, 0, 0.14);
-      border-top: 1.5px solid var(--pink-soft);
-      transform: translateY(20px);
-      transition: transform 0.22s ease;
-    }
-
-    @media (min-width: 640px) {
-      .modal {
-        border-radius: 26px;
-        padding: 26px;
-        max-width: 410px;
-        box-shadow: 0 20px 42px rgba(0, 0, 0, 0.15);
-        border: 1.5px solid var(--pink-soft);
-        transform: translateY(8px) scale(0.98);
-      }
-    }
-
-    .modal-overlay.active .modal {
-      transform: translateY(0) scale(1);
-    }
-
-    .sheet-handle {
-      width: 40px;
-      height: 4px;
-      background: #e5e7eb;
-      border-radius: 999px;
-      margin: 0 auto 14px;
-    }
-
-    @media (min-width: 640px) {
-      .sheet-handle {
-        display: none;
-      }
-    }
-
-    .modal-header-flex {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .modal h3 {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: #333;
-      margin-bottom: 10px;
-    }
-
-    .modal-header-flex h3 {
-      margin-bottom: 0;
-    }
-
-    .small-edit-btn {
-      background: #f0f0f0;
-      border: none;
-      padding: 5px 12px;
-      border-radius: 12px;
-      font-size: 0.76rem;
-      font-weight: 700;
-      color: #555;
-      cursor: pointer;
-    }
-
-    .terms-list {
-      list-style: none;
-      padding: 0;
-      margin: 10px 0 16px 0;
-    }
-
-    .terms-list li {
-      font-size: 0.86rem;
-      line-height: 1.55;
-      color: #555;
-      margin-bottom: 9px;
-      padding-left: 18px;
-      position: relative;
-    }
-
-    .terms-list li::before {
-      content: '✔';
-      position: absolute;
-      left: 0;
-      color: var(--pink-dark);
-      font-weight: bold;
-      font-size: 0.76rem;
-    }
-
-    .terms-textarea {
-      width: 100%;
-      height: 180px;
-      padding: 12px;
-      border: 1.5px solid var(--border-color);
-      border-radius: 14px;
-      line-height: 1.5;
-      resize: vertical;
-      outline: none;
-      margin-bottom: 12px;
-    }
-
-    .modal-options {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-
-    .modal-options button {
-      flex: 1;
-      padding: 11px;
-      border: 1.5px solid var(--border-color);
-      border-radius: 14px;
-      background: #ffffff;
-      color: #666;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.86rem;
-      transition: all 0.15s;
-    }
-
-    .modal-options button.selected {
-      border-color: var(--pink-main);
-      background: var(--pink-soft);
-      color: var(--pink-accent);
-    }
-
-    .modal textarea {
-      width: 100%;
-      height: 90px;
-      padding: 12px;
-      border: 1.5px solid var(--border-color);
-      border-radius: 14px;
-      resize: none;
-      margin-bottom: 14px;
-      outline: none;
-    }
-
-    .modal textarea:focus {
-      border-color: var(--pink-dark);
-    }
-
-    .modal-btns {
-      display: flex;
-      gap: 8px;
-    }
-
-    .modal-btns button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      border-radius: 14px;
-      cursor: pointer;
-      font-weight: 700;
-      font-size: 0.86rem;
-    }
-
-    .modal-btns .cancel { background: #f0f0f2; color: #666; }
-    .modal-btns .save { background: var(--pink-dark); color: #ffffff; }
-    .modal-btns .delete-btn { background: var(--pink-accent); color: #ffffff; }
-    .modal-btns .edit-btn { background: #5b7bb2; color: #ffffff; }
-
-    .archive-card {
-      background: var(--pink-soft);
-      border-radius: 16px;
-      padding: 14px;
-      margin-bottom: 10px;
-    }
-
-    .archive-card.bad {
-      background: var(--bad-soft);
-    }
-
-    .archive-card-header {
-      font-weight: 800;
-      margin-bottom: 6px;
-      color: #4a4a4a;
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.84rem;
-    }
-
-    /* 토스트 메시지 */
-    #toastBox {
-      position: fixed;
-      bottom: 28px;
-      left: 50%;
-      transform: translateX(-50%) translateY(80px);
-      background: rgba(55, 48, 52, 0.95);
-      color: #ffffff;
-      padding: 12px 22px;
-      border-radius: 999px;
-      font-size: 0.86rem;
-      font-weight: 600;
-      z-index: 2000;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      opacity: 0;
-      pointer-events: none;
-      transition: transform 0.25s ease, opacity 0.25s ease;
-      max-width: 90vw;
-      text-align: center;
-    }
-
-    #toastBox.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
+    .memo-save-btn { background: var(--pink-main); color: white; }
+    .memo-del-btn { background: #ff6b81; color: white; }
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal { background: white; border-radius: 24px; padding: 22px; width: 90%; max-width: 380px; max-height: 80vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--pink-soft); }
+    .modal-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .modal h3 { font-size: 1.05rem; color: #333; }
+    .small-edit-btn { background: #f0f0f0; border: none; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #555; cursor: pointer; }
+    .terms-list { list-style: none; padding: 0; margin: 10px 0 16px 0; }
+    .terms-list li { font-size: 0.85rem; line-height: 1.5; color: #555; margin-bottom: 8px; padding-left: 18px; position: relative; }
+    .terms-list li::before { content: '✔'; position: absolute; left: 0; color: var(--pink-dark); font-weight: bold; font-size: 0.75rem; }
+    .terms-textarea { width: 100%; height: 180px; padding: 10px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.85rem; line-height: 1.5; resize: vertical; outline: none; margin-bottom: 12px; }
+    .modal-options { display: flex; gap: 8px; margin-bottom: 12px; }
+    .modal-options button { flex: 1; padding: 9px; border: 1px solid var(--border-color); border-radius: 12px; background: white; color: #666; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .modal-options button.selected { border-color: var(--pink-main); background: var(--pink-soft); color: var(--pink-dark); }
+    .modal textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid var(--border-color); border-radius: 12px; resize: none; margin-bottom: 14px; font-size: 0.85rem; outline: none; }
+    .modal-btns { display: flex; gap: 8px; }
+    .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    .modal-btns .cancel { background: #f0f0f0; color: #666; }
+    .modal-btns .save { background: var(--pink-main); color: white; }
+    .modal-btns .delete-btn { background: #ff6b81; color: white; }
+    .modal-btns .edit-btn { background: #4a90e2; color: white; }
+    .archive-card { background: var(--pink-soft); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+    .archive-card-header { font-weight: 700; margin-bottom: 6px; color: #4a4a4a; display: flex; justify-content: space-between; font-size: 0.8rem; }
   </style>
 </head>
 <body>
 
-  <!-- 토스트 알림 -->
-  <div id="toastBox"></div>
+<!-- 로그인 / 회원가입 화면 -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <h2 id="authTitle">🍇 문희사항 로그인 🍇</h2>
+    <p id="authDesc">두 분만의 소중한 공간에 오신 걸 환영해요!</p>
+    <input type="email" id="authEmail" class="auth-input" placeholder="이메일 주소 입력">
+    <input type="password" id="authPassword" class="auth-input" placeholder="비밀번호 (6자리 이상)">
+    <button class="auth-btn" id="authSubmitBtn" onclick="handleAuth()">로그인하기</button>
+    <span class="auth-switch" id="authSwitchText" onclick="toggleAuthMode()">계정이 없으신가요? 회원가입하기</span>
+  </div>
+</div>
 
-  <!-- 0. 초기 로딩 화면 -->
-  <div id="loadingScreen" class="center-screen">
-    <div style="text-align:center;">
-      <div style="font-size:2.8rem; margin-bottom:12px;">🍇</div>
-      <p style="font-size:0.9rem; font-weight:700; color:#ff8da1;">문희사항 보드 연결 중...</p>
+<div class="container">
+  <header>
+    <h1>🍇 문희사항 🍇</h1>
+    <div class="top-btns">
+      <button class="top-btn" onclick="openTermsModal()">📋 이용약관</button>
+      <button class="top-btn" onclick="openArchiveModal()">📜 보관함</button>
+      <button class="top-btn" onclick="handleLogout()" style="color:#ff6b81;">로그아웃</button>
+    </div>
+  </header>
+
+  <div class="dual-board">
+    <!-- 사용자 1 카드 -->
+    <div class="user-card" id="card-user1">
+      <div class="user-card-header">
+        <span class="user-name">사용자 1 (세희)</span>
+        <span id="badge-user1" style="font-size:0.75rem; background:#fff0f5; color:#ff8da1; padding:2px 8px; border-radius:10px; font-weight:600;"></span>
+      </div>
+      <div class="board-toggle" id="toggle-user1">
+        <button class="active like" onclick="switchBoard('user1', 'like')">좋아요</button>
+        <button class="bad" onclick="switchBoard('user1', 'bad')">나빠요</button>
+      </div>
+      <div class="board-status">
+        <span id="vol-user1">Vol. 1</span>
+        <span id="count-user1">0 / 15개</span>
+      </div>
+      <div class="grape-container" id="grape-user1"></div>
+      <div class="memo-section" id="memoSection-user1"></div>
+    </div>
+
+    <!-- 사용자 2 카드 -->
+    <div class="user-card" id="card-user2">
+      <div class="user-card-header">
+        <span class="user-name">사용자 2 (재민)</span>
+        <span id="badge-user2" style="font-size:0.75rem; background:#fff0f5; color:#ff8da1; padding:2px 8px; border-radius:10px; font-weight:600;"></span>
+      </div>
+      <div class="board-toggle" id="toggle-user2">
+        <button class="active like" onclick="switchBoard('user2', 'like')">좋아요</button>
+        <button class="bad" onclick="switchBoard('user2', 'bad')">나빠요</button>
+      </div>
+      <div class="board-status">
+        <span id="vol-user2">Vol. 1</span>
+        <span id="count-user2">0 / 15개</span>
+      </div>
+      <div class="grape-container" id="grape-user2"></div>
+      <div class="memo-section" id="memoSection-user2"></div>
     </div>
   </div>
+</div>
 
-  <!-- 1. 로그인 / 회원가입 화면 -->
-  <div id="authScreen" class="center-screen hidden">
-    <div class="auth-card">
-      <div class="auth-logo">🍇</div>
-      <h1 class="auth-title">문희사항</h1>
-      <p class="auth-sub">
-        사파리 방문 기록을 지워도 언제든 로그인하면<br>
-        소중한 포도알 기록이 그대로 보존돼요!
-      </p>
+<!-- 각종 모달창들 -->
+<div class="modal-overlay" id="termsModal">
+  <div class="modal">
+    <div class="modal-header-flex">
+      <h3 id="termsModalTitle">📋 우리 둘만의 이용 약관</h3>
+      <button class="small-edit-btn" id="termsTopEditBtn" onclick="openTermsEdit()">수정</button>
+    </div>
+    <div id="termsBody"></div>
+    <div class="modal-btns" id="termsModalBtns"></div>
+  </div>
+</div>
 
-      <div class="auth-tabs">
-        <button type="button" id="tabLoginBtn" class="active" onclick="switchAuthMode('login')">로그인</button>
-        <button type="button" id="tabSignupBtn" onclick="switchAuthMode('signup')">회원가입 (처음)</button>
-      </div>
-
-      <form id="authForm" onsubmit="handleAuthSubmit(event)">
-        <div class="form-group hidden" id="nicknameGroup">
-          <label for="authNickname">내 애칭 (닉네임)</label>
-          <input type="text" id="authNickname" class="form-input" maxlength="12" placeholder="예: 세희, 재민, 공주, 왕자">
-        </div>
-
-        <div class="form-group">
-          <label for="authEmail">이메일</label>
-          <input type="email" id="authEmail" class="form-input" required placeholder="love@couple.com">
-        </div>
-
-        <div class="form-group">
-          <label for="authPassword">비밀번호 (6자 이상)</label>
-          <input type="password" id="authPassword" class="form-input" required minlength="6" placeholder="비밀번호를 입력하세요">
-        </div>
-
-        <div id="authErrorBox" class="auth-error hidden"></div>
-
-        <button type="submit" id="authSubmitBtn" class="primary-btn">로그인하기</button>
-      </form>
-
-      <p style="text-align:center; font-size:0.74rem; color:#aaa; margin-top:16px;">
-        🔒 오직 두 사람만 입장할 수 있는 프라이빗 커플 공간입니다.
-      </p>
+<div class="modal-overlay" id="addModal">
+  <div class="modal">
+    <h3 id="modalTitle">스티커 선물하기</h3>
+    <div class="modal-options">
+      <button class="selected" id="val-1" onclick="selectValue(1)">1개</button>
+      <button id="val-05" onclick="selectValue(0.5)">0.5개</button>
+    </div>
+    <textarea id="stickerReason" placeholder="스티커를 주는 이유를 적어주세요!"></textarea>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeAddModal()">취소</button>
+      <button class="save" onclick="submitSticker()">스티커 붙이기</button>
     </div>
   </div>
+</div>
 
-  <!-- 2. 자리 선택 화면 (최초 1회 본인 포도판 연결) -->
-  <div id="slotScreen" class="center-screen hidden">
-    <div class="auth-card">
-      <div class="auth-logo">💑</div>
-      <h2 class="auth-title" style="font-size:1.3rem; color:#333;">문희사항 자리 선택</h2>
-      <p class="auth-sub">
-        본인의 포도판 자리를 한 번만 선택해 주세요.<br>
-        두 자리가 모두 연결되면 다른 사람은 접근할 수 없어요!
-      </p>
-
-      <div id="slotListContainer"></div>
-
-      <button type="button" onclick="handleLogout()" style="width:100%; background:none; border:none; color:#999; font-size:0.8rem; text-decoration:underline; margin-top:10px; cursor:pointer;">
-        다른 계정으로 로그인하기
-      </button>
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <h3 id="detailTitle">🍇 스티커 정보</h3>
+    <div id="detailContentBody" style="margin-bottom:15px; line-height: 1.5; color:#555; font-size: 0.88rem;"></div>
+    <div class="modal-btns" id="detailModalBtns">
+      <button class="cancel" onclick="closeDetailModal()">닫기</button>
     </div>
   </div>
+</div>
 
-  <!-- 3. 접근 차단 화면 (이미 2명 등록 완료 시) -->
-  <div id="lockedScreen" class="center-screen hidden">
-    <div class="auth-card" style="text-align:center;">
-      <div class="auth-logo">🔐</div>
-      <h2 class="auth-title" style="font-size:1.25rem; color:#333;">커플 전용 공간입니다</h2>
-      <p class="auth-sub">
-        이미 두 명의 파트너가 등록된 문희사항이라<br>
-        새로운 계정은 입장할 수 없습니다.
-      </p>
-      <button type="button" class="primary-btn" onclick="handleLogout()">로그아웃</button>
+<div class="modal-overlay" id="archiveModal">
+  <div class="modal">
+    <h3>📜 완성된 포도판 보관함</h3>
+    <div class="modal-options" style="margin: 10px 0;">
+      <button id="filter-user1" class="selected" onclick="filterArchive('user1')">사용자 1</button>
+      <button id="filter-user2" onclick="filterArchive('user2')">사용자 2</button>
+    </div>
+    <div id="archiveList"></div>
+    <div class="modal-btns" style="margin-top: 12px;">
+      <button class="cancel" onclick="closeArchiveModal()">닫기</button>
     </div>
   </div>
+</div>
 
-  <!-- 4. 메인 포도알 보드 화면 -->
-  <div id="mainAppScreen" class="container hidden">
-    <header>
-      <div class="header-left">
-        <h1>🍇 문희사항 🍇</h1>
-        <span class="user-badge" id="myBadge">접속 중</span>
-      </div>
-      <div class="top-btns">
-        <button class="top-btn" onclick="openTermsModal()">📋 이용약관</button>
-        <button class="top-btn" onclick="openArchiveModal()">📜 보관함</button>
-        <button class="top-btn logout" onclick="handleLogout()">로그아웃</button>
-      </div>
-    </header>
+<script>
+  // 🔑 방금 찾아주신 Supabase URL과 Publishable Key가 이미 쏙 들어가 있습니다!
+  const SUPABASE_URL = 'https://skxaatryqofhfluakczz.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_5q751-dGVaSXEW6YEJqZ2w_wOGghSQU';[cite: 2]
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    <div class="rule-banner">
-      <span>🍇 <b>스티커 선물</b>은 <b style="color:#ff6b81;">상대방 포도판</b>에만 가능 (내 판 작성 불가)</span>
-      <span>✨ <b>좋아요 소원</b>은 내 판에 · 🔥 <b>나빠요 벌칙</b>은 상대 판에 작성</span>
-    </div>
+  let currentUserId = null;
+  let isSignUpMode = false;
 
-    <!-- 모바일 전용 화면 전환 탭 (PC에서는 자동 숨김) -->
-    <div class="mobile-switcher">
-      <button type="button" id="mTab-both" class="active" onclick="setMobileView('both')">👀 둘 다 보기</button>
-      <button type="button" id="mTab-partner" onclick="setMobileView('partner')">💝 상대 판</button>
-      <button type="button" id="mTab-mine" onclick="setMobileView('mine')">🌷 내 판</button>
-    </div>
+  const smileSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 58 Q 50 82 72 58" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
+  const sadSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 72 Q 50 52 72 72" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
 
-    <div class="dual-board" id="dualBoardContainer">
-      <!-- 1번 사용자 카드 -->
-      <div class="user-card" id="card-user1">
-        <div class="user-card-header">
-          <div class="user-name-wrap">
-            <span class="user-name" id="nameDisplay-user1">사용자 1</span>
-            <span class="role-pill" id="rolePill-user1"></span>
-          </div>
-          <button class="edit-name-btn hidden" id="editNameBtn-user1" onclick="openNameModal()">애칭 수정</button>
-        </div>
-        <div class="board-toggle" id="toggle-user1">
-          <button class="active like" onclick="switchBoard('user1', 'like')">좋아요</button>
-          <button class="bad" onclick="switchBoard('user1', 'bad')">나빠요</button>
-        </div>
-        <div class="board-status">
-          <span id="vol-user1">Vol. 1</span>
-          <span id="count-user1">0 / 15개</span>
-        </div>
-        <div class="grape-container" id="grape-user1"></div>
-        <div class="memo-section" id="memoSection-user1"></div>
-      </div>
+  const defaultTerms = [
+    "하루에 스티커는 최대 3개까지만 줄 수 있어요.",
+    "한 가지 일에는 최대 1개 스티커만 줄 수 있어요.",
+    "바라는 것의 금전적인 한도는 최대 3만 원이에요.",
+    "좋아요 완성 판 5개 모으면 한 달간 당신이 왕이에요!",
+    "안 준 스티커는 내일로 이월되지 않아요.",
+    "사유를 잘못 적었을 땐 상대방 화면에서 언제든 수정/삭제가 가능해요."
+  ];
 
-      <!-- 2번 사용자 카드 -->
-      <div class="user-card" id="card-user2">
-        <div class="user-card-header">
-          <div class="user-name-wrap">
-            <span class="user-name" id="nameDisplay-user2">사용자 2</span>
-            <span class="role-pill" id="rolePill-user2"></span>
-          </div>
-          <button class="edit-name-btn hidden" id="editNameBtn-user2" onclick="openNameModal()">애칭 수정</button>
-        </div>
-        <div class="board-toggle" id="toggle-user2">
-          <button class="active like" onclick="switchBoard('user2', 'like')">좋아요</button>
-          <button class="bad" onclick="switchBoard('user2', 'bad')">나빠요</button>
-        </div>
-        <div class="board-status">
-          <span id="vol-user2">Vol. 1</span>
-          <span id="count-user2">0 / 15개</span>
-        </div>
-        <div class="grape-container" id="grape-user2"></div>
-        <div class="memo-section" id="memoSection-user2"></div>
-      </div>
-    </div>
-  </div>
+  let appState = {
+    terms: [...defaultTerms],
+    users: { user1: { activeTab: 'like', ownerEmail: '' }, user2: { activeTab: 'like', ownerEmail: '' } },
+    boards: {
+      user1: { like: { currentVol: 1, stickers: [], memo: '' }, bad: { currentVol: 1, stickers: [], memo: '' }, archive: [] },
+      user2: { like: { currentVol: 1, stickers: [], memo: '' }, bad: { currentVol: 1, stickers: [], memo: '' }, archive: [] }
+    }
+  };
 
-  <!-- 이용 약관 모달 -->
-  <div class="modal-overlay" id="termsModal">
-    <div class="modal">
-      <div class="sheet-handle"></div>
-      <div class="modal-header-flex">
-        <h3 id="termsModalTitle">📋 우리 둘만의 이용 약관</h3>
-        <button class="small-edit-btn" id="termsTopEditBtn" onclick="openTermsEdit()">수정</button>
-      </div>
-      <div id="termsBody"></div>
-      <div class="modal-btns" id="termsModalBtns"></div>
-    </div>
-  </div>
+  let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
 
-  <!-- 스티커 추가 모달 -->
-  <div class="modal-overlay" id="addModal">
-    <div class="modal">
-      <div class="sheet-handle"></div>
-      <h3 id="modalTitle">스티커 선물하기</h3>
-      <div class="modal-options">
-        <button class="selected" id="val-1" onclick="selectValue(1)">1개</button>
-        <button id="val-05" onclick="selectValue(0.5)">0.5개</button>
-      </div>
-      <textarea id="stickerReason" placeholder="스티커를 주는 이유를 적어주세요!"></textarea>
-      <div class="modal-btns">
-        <button class="cancel" onclick="closeAddModal()">취소</button>
-        <button class="save" onclick="submitSticker()">스티커 붙이기</button>
-      </div>
-    </div>
-  </div>
+  window.onload = async function() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+      document.getElementById('authOverlay').style.display = 'none';
+      await loadCloudData();
+    }
+  };
 
-  <!-- 상세 사유 / 수정 모달 -->
-  <div class="modal-overlay" id="detailModal">
-    <div class="modal">
-      <div class="sheet-handle"></div>
-      <h3 id="detailTitle">🍇 스티커 정보</h3>
-      <div id="detailContentBody" style="margin-bottom:15px; line-height: 1.55; color:#555; font-size: 0.88rem;"></div>
-      <div class="modal-btns" id="detailModalBtns"></div>
-    </div>
-  </div>
+  function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    document.getElementById('authTitle').innerText = isSignUpMode ? '🍇 문희사항 회원가입 🍇' : '🍇 문희사항 로그인 🍇';
+    document.getElementById('authSubmitBtn').innerText = isSignUpMode ? '가입하고 시작하기' : '로그인하기';
+    document.getElementById('authSwitchText').innerText = isSignUpMode ? '이미 계정이 있으신가요? 로그인하기' : '계정이 없으신가요? 회원가입하기';
+  }
 
-  <!-- 보관함 모달 -->
-  <div class="modal-overlay" id="archiveModal">
-    <div class="modal">
-      <div class="sheet-handle"></div>
-      <h3>📜 완성된 포도판 보관함</h3>
-      <div class="modal-options" style="margin: 10px 0;">
-        <button id="filter-user1" class="selected" onclick="filterArchive('user1')">사용자 1</button>
-        <button id="filter-user2" onclick="filterArchive('user2')">사용자 2</button>
-      </div>
-      <div id="archiveList"></div>
-      <div class="modal-btns" style="margin-top: 12px;">
-        <button class="cancel" onclick="closeArchiveModal()">닫기</button>
-      </div>
-    </div>
-  </div>
+  async function handleAuth() {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value.trim();
+    if (!email || !password) { alert('이메일과 비밀번호를 입력해주세요!'); return; }
 
-  <!-- 애칭 변경 모달 -->
-  <div class="modal-overlay" id="nameModal">
-    <div class="modal">
-      <div class="sheet-handle"></div>
-      <h3>✏️ 내 애칭 변경하기</h3>
-      <p style="font-size:0.78rem; color:#888; margin-bottom:10px;">상대방 화면에도 변경된 애칭으로 바로 표시돼요!</p>
-      <input type="text" id="nicknameInput" class="form-input" maxlength="12" placeholder="새 애칭 입력 (최대 12자)" style="margin-bottom:14px;">
-      <div class="modal-btns">
-        <button class="cancel" onclick="closeNameModal()">취소</button>
-        <button class="save" onclick="saveNewName()">저장</button>
-      </div>
-    </div>
-  </div>
+    if (isSignUpMode) {
+      const { error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) { alert('가입 실패: ' + error.message); return; }
+      alert('회원가입 완료! 로그인되었습니다.');
+    } else {
+      const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) { alert('로그인 실패: ' + error.message); return; }
+    }
 
-  <!-- 커스텀 확인(Confirm) 모달 -->
-  <div class="modal-overlay" id="confirmModal">
-    <div class="modal" style="text-align:center;">
-      <div class="sheet-handle"></div>
-      <div style="font-size:1.8rem; margin-bottom:6px;">🤔</div>
-      <p id="confirmText" style="font-size:0.92rem; font-weight:700; color:#444; line-height:1.55; margin-bottom:16px; white-space:pre-line;"></p>
-      <div class="modal-btns">
-        <button class="cancel" onclick="resolveConfirm(false)">취소</button>
-        <button class="delete-btn" onclick="resolveConfirm(true)">확인</button>
-      </div>
-    </div>
-  </div>
+    document.getElementById('authOverlay').style.display = 'none';
+    await loadCloudData();
+  }
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
-      setDoc,
-      updateDoc,
-      onSnapshot
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  async function handleLogout() {
+    await supabaseClient.auth.signOut();
+    location.reload();
+  }
 
-    // Firebase 초기화
-    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-    const firebaseConfig = JSON.parse(__firebase_config);
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  async function loadCloudData() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const email = user.email;
 
-    // RULE 1 준수 경로
-    const boardDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'moonhee_board', 'main');
-
-    const smileSvg = `
-      <svg viewBox="0 0 100 100">
-        <ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" />
-        <ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" />
-        <path d="M 28 58 Q 50 82 72 58" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" />
-      </svg>
-    `;
-
-    const sadSvg = `
-      <svg viewBox="0 0 100 100">
-        <ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" />
-        <ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" />
-        <path d="M 28 72 Q 50 52 72 72" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" />
-      </svg>
-    `;
-
-    const defaultTerms = [
-      "하루에 스티커는 최대 3개까지만 줄 수 있어요.",
-      "한 가지 일에는 최대 1개 스티커만 줄 수 있어요.",
-      "바라는 것의 금전적인 한도는 최대 3만 원이에요.",
-      "좋아요 완성 판 5개 모으면 한 달간 당신이 왕이에요!",
-      "안 준 스티커는 내일로 이월되지 않아요.",
-      "사유를 잘못 적었을 땐 스티커를 준 사람이 언제든 수정/삭제가 가능해요."
-    ];
-
-    const createDefaultState = () => ({
-      terms: [...defaultTerms],
-      slots: {
-        user1: null,
-        user2: null
-      },
-      users: {
-        user1: { activeTab: 'like', name: '여자친구 🌷' },
-        user2: { activeTab: 'like', name: '남자친구 🍀' }
-      },
-      boards: {
-        user1: {
-          like: { currentVol: 1, stickers: [], memo: '' },
-          bad: { currentVol: 1, stickers: [], memo: '' },
-          archive: []
-        },
-        user2: {
-          like: { currentVol: 1, stickers: [], memo: '' },
-          bad: { currentVol: 1, stickers: [], memo: '' },
-          archive: []
-        }
+    const { data } = await supabaseClient.from('boards_data').select('*');
+    if (data && data.length > 0) {
+      const savedState = data.find(row => row.id === 'main_state');
+      if (savedState && savedState.data) {
+        appState = savedState.data;
       }
+    }
+
+    if (appState.users.user1.ownerEmail === email) currentUserId = 'user1';
+    else if (appState.users.user2.ownerEmail === email) currentUserId = 'user2';
+    else {
+      if (!appState.users.user1.ownerEmail) { appState.users.user1.ownerEmail = email; currentUserId = 'user1'; }
+      else if (!appState.users.user2.ownerEmail) { appState.users.user2.ownerEmail = email; currentUserId = 'user2'; }
+      else { currentUserId = 'user1'; }
+      await saveCloudData();
+    }
+
+    renderAll();
+  }
+
+  async function saveCloudData() {
+    await supabaseClient.from('boards_data').upsert({
+      id: 'main_state',
+      data: appState,
+      updated_at: new Date()
+    });
+  }
+
+  function renderAll() {
+    renderBoard('user1');
+    renderBoard('user2');
+  }
+
+  function renderBoard(userId) {
+    const tab = appState.users[userId].activeTab;
+    const board = appState.boards[userId][tab];
+    const container = document.getElementById(`grape-${userId}`);
+    const toggle = document.getElementById(`toggle-${userId}`);
+    const memoSection = document.getElementById(`memoSection-${userId}`);
+    const badge = document.getElementById(`badge-${userId}`);
+    
+    badge.innerText = userId === currentUserId ? '내 계정 💖' : '상대방';
+
+    if (tab === 'bad') {
+      container.classList.add('bad-mode'); toggle.classList.add('bad-mode'); memoSection.classList.add('bad-mode');
+    } else {
+      container.classList.remove('bad-mode'); toggle.classList.remove('bad-mode'); memoSection.classList.remove('bad-mode');
+    }
+
+    const card = document.getElementById(`card-${userId}`);
+    const btns = card.querySelectorAll('.board-toggle button');
+    btns[0].className = tab === 'like' ? 'active like' : '';
+    btns[1].className = tab === 'bad' ? 'active bad' : '';
+
+    let totalCount = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    document.getElementById(`vol-${userId}`).innerText = `${tab === 'like' ? '좋아요' : '나빠요'} Vol. ${board.currentVol}`;
+    document.getElementById(`count-${userId}`).innerText = `${totalCount} / 15개`;
+    
+    container.innerHTML = '';
+    const layout = [5, 4, 3, 2, 1];
+    let stickerIdx = 0;
+    
+    layout.forEach(rowCount => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'grape-row';
+      for (let i = 0; i < rowCount; i++) {
+        const grapeIndex = stickerIdx;
+        const grape = document.createElement('div');
+        grape.className = 'grape-grape';
+        
+        let accumulated = 0, filledType = null, itemData = null;
+        for (let item of board.stickers) {
+          accumulated += item.value;
+          if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
+            itemData = item;
+            filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
+          }
+        }
+
+        if (filledType) {
+          grape.classList.add(filledType, tab);
+          grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
+          grape.onclick = () => showStickerDetail(userId, itemData, tab);
+        } else {
+          grape.innerText = grapeIndex + 1;
+          grape.onclick = () => handleGrapeClick(userId, grapeIndex);
+        }
+        rowDiv.appendChild(grape);
+        stickerIdx++;
+      }
+      container.appendChild(rowDiv);
     });
 
-    let appState = createDefaultState();
-    let currentAuthUser = null;
-    let currentUserId = null; // 'user1' 또는 'user2'
-    let unsubscribeBoard = null;
+    renderMemo(userId, tab, memoSection);
+  }
 
-    let authMode = 'login';
-    let signupNickname = '';
-    let mobileView = 'both'; // 'both' | 'partner' | 'mine'
-    let selectedTargetUser = null;
-    let selectedVal = 1;
-    let currentActiveIndex = null;
-    let currentActiveTargetUser = null;
-    let currentActiveTab = null;
-    let confirmCallback = null;
+  function renderMemo(userId, tab, memoSection) {
+    const board = appState.boards[userId][tab];
+    const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
+    const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
+    const canEdit = isMyLikeBoard || isOtherBadBoard;
+    const icon = tab === 'like' ? '✨' : '🔥';
 
-    function showToast(msg) {
-      const box = document.getElementById('toastBox');
-      box.innerText = msg;
-      box.classList.add('show');
-      clearTimeout(window._toastTimer);
-      window._toastTimer = setTimeout(() => {
-        box.classList.remove('show');
-      }, 2800);
-    }
+    memoSection.innerHTML = `<div class="memo-line"><span id="memoTextDisplay-${userId}"></span><div id="memoActionBtns-${userId}"></div></div>`;
+    const displaySpan = document.getElementById(`memoTextDisplay-${userId}`);
+    const actionBtns = document.getElementById(`memoActionBtns-${userId}`);
 
-    function openConfirm(text) {
-      return new Promise((resolve) => {
-        confirmCallback = resolve;
-        document.getElementById('confirmText').innerText = text;
-        document.getElementById('confirmModal').classList.add('active');
-      });
-    }
-
-    window.resolveConfirm = function(result) {
-      document.getElementById('confirmModal').classList.remove('active');
-      if (confirmCallback) {
-        confirmCallback(result);
-        confirmCallback = null;
+    if (board.memo) {
+      displaySpan.innerText = `다 모으면: ${icon}${board.memo}${icon}`;
+      if (canEdit) {
+        actionBtns.innerHTML = `<div class="memo-btns" style="margin-left: 8px;"><button class="memo-edit-btn" onclick="editMemo('${userId}', '${tab}')">수정</button><button class="memo-del-btn" onclick="deleteMemo('${userId}', '${tab}')">삭제</button></div>`;
       }
-    };
-
-    function showOnlyScreen(screenId) {
-      ['loadingScreen', 'authScreen', 'slotScreen', 'lockedScreen', 'mainAppScreen'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-      });
-      document.getElementById(screenId).classList.remove('hidden');
-    }
-
-    function getTodayString() {
-      const now = new Date();
-      const tzOffset = now.getTimezoneOffset() * 60000;
-      return new Date(now.getTime() - tzOffset).toISOString().split('T')[0];
-    }
-
-    function escapeHtml(text) {
-      if (!text) return '';
-      return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    // =========================================
-    // 1. 로그인 / 회원가입 / 인증
-    // =========================================
-    window.switchAuthMode = function(mode) {
-      authMode = mode;
-      document.getElementById('tabLoginBtn').className = mode === 'login' ? 'active' : '';
-      document.getElementById('tabSignupBtn').className = mode === 'signup' ? 'active' : '';
-      document.getElementById('authErrorBox').classList.add('hidden');
-
-      if (mode === 'signup') {
-        document.getElementById('nicknameGroup').classList.remove('hidden');
-        document.getElementById('authSubmitBtn').innerText = '계정 만들고 시작하기';
+    } else {
+      if (canEdit) {
+        displaySpan.innerHTML = `<span style="color:#aaa; cursor:pointer; font-weight:normal;" onclick="editMemo('${userId}', '${tab}')">당신이 바라는 것은?</span>`;
       } else {
-        document.getElementById('nicknameGroup').classList.add('hidden');
-        document.getElementById('authSubmitBtn').innerText = '로그인하기';
+        displaySpan.innerHTML = `<span style="color:#aaa; font-weight:normal;">등록된 내용이 없습니다.</span>`;
       }
-    };
+    }
+  }
 
-    window.handleAuthSubmit = async function(e) {
-      e.preventDefault();
-      const email = document.getElementById('authEmail').value.trim();
-      const password = document.getElementById('authPassword').value;
-      const nick = document.getElementById('authNickname').value.trim();
-      const errBox = document.getElementById('authErrorBox');
-      const submitBtn = document.getElementById('authSubmitBtn');
+  function editMemo(userId, tab) {
+    const board = appState.boards[userId][tab];
+    document.getElementById(`memoSection-${userId}`).innerHTML = `
+      <textarea class="memo-textarea" id="memoInput-${userId}" placeholder="내용을 입력하세요">${board.memo || ''}</textarea>
+      <div class="memo-btns"><button class="memo-edit-btn" onclick="renderBoard('${userId}')">취소</button><button class="memo-save-btn" onclick="saveMemo('${userId}', '${tab}')">저장</button></div>
+    `;
+  }
 
-      errBox.classList.add('hidden');
-      submitBtn.disabled = true;
+  async function saveMemo(userId, tab) {
+    appState.boards[userId][tab].memo = document.getElementById(`memoInput-${userId}`).value.trim();
+    await saveCloudData();
+    renderBoard(userId);
+  }
 
-      try {
-        if (authMode === 'signup') {
-          signupNickname = nick;
-          await createUserWithEmailAndPassword(auth, email, password);
-          showToast('계정이 생성되었어요! 문희사항 자리를 선택해주세요.');
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-          showToast('로그인 성공! 문희사항을 불러옵니다 💕');
-        }
-      } catch (err) {
-        let message = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해 주세요.';
-        if (err.code === 'auth/email-already-in-use') {
-          message = '이미 가입된 이메일입니다. [로그인] 탭에서 로그인해 주세요!';
-        } else if (err.code === 'auth/weak-password') {
-          message = '비밀번호는 6자 이상으로 입력해 주세요.';
-        } else if (err.code === 'auth/invalid-email') {
-          message = '올바른 이메일 형식을 입력해 주세요.';
-        } else if (
-          err.code === 'auth/invalid-credential' ||
-          err.code === 'auth/wrong-password' ||
-          err.code === 'auth/user-not-found'
-        ) {
-          message = '이메일 또는 비밀번호가 맞지 않습니다. 처음이라면 [회원가입]을 눌러주세요!';
-        }
-        errBox.innerText = message;
-        errBox.classList.remove('hidden');
-      } finally {
-        submitBtn.disabled = false;
-      }
-    };
+  async function deleteMemo(userId, tab) {
+    if (!confirm('내용을 삭제하시겠습니까?')) return;
+    appState.boards[userId][tab].memo = '';
+    await saveCloudData();
+    renderBoard(userId);
+  }
 
-    window.handleLogout = async function() {
-      if (unsubscribeBoard) {
-        unsubscribeBoard();
-        unsubscribeBoard = null;
-      }
-      currentUserId = null;
-      await signOut(auth);
-      showToast('로그아웃 되었습니다.');
-    };
+  function switchBoard(userId, tab) {
+    appState.users[userId].activeTab = tab;
+    renderBoard(userId);
+  }
 
-    onAuthStateChanged(auth, async (user) => {
-      currentAuthUser = user;
-      if (!user) {
-        if (unsubscribeBoard) {
-          unsubscribeBoard();
-          unsubscribeBoard = null;
-        }
-        currentUserId = null;
-        showOnlyScreen('authScreen');
-        return;
-      }
+  function handleGrapeClick(targetUserId, grapeIndex) {
+    if (currentUserId === targetUserId) {
+      alert('본인의 포도판에는 직접 스티커를 붙일 수 없어요! 상대방 판에만 붙일 수 있습니다.');
+      return;
+    }
+    const tab = appState.users[targetUserId].activeTab;
+    const board = appState.boards[targetUserId][tab];
+    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
 
-      showOnlyScreen('loadingScreen');
-      await connectBoardRealtime(user);
+    selectedTargetUser = targetUserId;
+    selectedVal = 1;
+    document.getElementById('modalTitle').innerText = `${tab === 'like' ? '💖 좋아요' : '💔 나빠요'} 스티커 선물`;
+    document.getElementById('stickerReason').value = '';
+    document.getElementById('addModal').classList.add('active');
+  }
+
+  function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
+  function selectValue(val) {
+    selectedVal = val;
+    document.getElementById('val-1').className = val === 1 ? 'selected' : '';
+    document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
+  }
+
+  async function submitSticker() {
+    const reason = document.getElementById('stickerReason').value.trim();
+    if (!reason) { alert('사유를 입력해주세요!'); return; }
+
+    const tab = appState.users[selectedTargetUser].activeTab;
+    const board = appState.boards[selectedTargetUser][tab];
+    const today = new Date().toISOString().split('T')[0];
+
+    board.stickers.push({ value: selectedVal, reason: reason, date: today, from: currentUserId });
+
+    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
+      alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
+      appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
+      board.currentVol += 1; board.stickers = []; board.memo = '';
+    }
+
+    await saveCloudData();
+    renderAll();
+    closeAddModal();
+  }
+
+  function showStickerDetail(targetUserId, item, tab) {
+    if (!item) return;
+    currentActiveItem = item; currentActiveTargetUser = targetUserId; currentActiveTab = tab;
+    document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보`;
+    document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
+    
+    const btnsDiv = document.getElementById('detailModalBtns');
+    btnsDiv.innerHTML = item.from === currentUserId ? 
+      `<button class="delete-btn" onclick="deleteSticker()">삭제</button><button class="cancel" onclick="closeDetailModal()">닫기</button>` : 
+      `<button class="cancel" onclick="closeDetailModal()">닫기</button>`;
+    document.getElementById('detailModal').classList.add('active');
+  }
+
+  async function deleteSticker() {
+    if (!confirm('정말 이 스티커를 삭제하시겠습니까?')) return;
+    const board = appState.boards[currentActiveTargetUser][currentActiveTab];
+    const idx = board.stickers.indexOf(currentActiveItem);
+    if (idx > -1) board.stickers.splice(idx, 1);
+
+    await saveCloudData();
+    renderAll();
+    closeDetailModal();
+  }
+
+  function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
+  function openTermsModal() { document.getElementById('termsModal').classList.add('active'); }
+  function closeTermsModal() { document.getElementById('termsModal').classList.remove('active'); }
+  function openArchiveModal() { filterArchive('user1'); document.getElementById('archiveModal').classList.add('active'); }
+  function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
+
+  function filterArchive(userId) {
+    document.getElementById('filter-user1').className = userId === 'user1' ? 'selected' : '';
+    document.getElementById('filter-user2').className = userId === 'user2' ? 'selected' : '';
+    const listDiv = document.getElementById('archiveList');
+    const archive = appState.boards[userId].archive;
+    if (!archive || archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
+
+    listDiv.innerHTML = '';
+    archive.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'archive-card';
+      card.innerHTML = `<div class="archive-card-header"><span>${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol}</span><span>완성일: ${item.completedDate}</span></div><ul style="padding-left:16px;">` + 
+        item.stickers.map(s => `<li style="font-size:0.78rem; color:#666;">[${s.date}] ${s.reason} (${s.value}개)</li>`).join('') + `</ul>`;
+      listDiv.appendChild(card);
     });
-
-    async function connectBoardRealtime(user) {
-      if (!user) return;
-      try {
-        const initialSnap = await getDoc(boardDocRef);
-        if (!initialSnap.exists()) {
-          await setDoc(boardDocRef, createDefaultState());
-        }
-
-        if (unsubscribeBoard) unsubscribeBoard();
-
-        unsubscribeBoard = onSnapshot(
-          boardDocRef,
-          (snap) => {
-            if (!snap.exists()) return;
-            const raw = snap.data();
-            const def = createDefaultState();
-
-            appState = {
-              terms: Array.isArray(raw.terms) ? raw.terms : def.terms,
-              slots: {
-                user1: raw.slots?.user1 || null,
-                user2: raw.slots?.user2 || null
-              },
-              users: {
-                user1: { ...def.users.user1, ...(raw.users?.user1 || {}) },
-                user2: { ...def.users.user2, ...(raw.users?.user2 || {}) }
-              },
-              boards: {
-                user1: {
-                  like: { ...def.boards.user1.like, ...(raw.boards?.user1?.like || {}) },
-                  bad: { ...def.boards.user1.bad, ...(raw.boards?.user1?.bad || {}) },
-                  archive: Array.isArray(raw.boards?.user1?.archive) ? raw.boards.user1.archive : []
-                },
-                user2: {
-                  like: { ...def.boards.user2.like, ...(raw.boards?.user2?.like || {}) },
-                  bad: { ...def.boards.user2.bad, ...(raw.boards?.user2?.bad || {}) },
-                  archive: Array.isArray(raw.boards?.user2?.archive) ? raw.boards.user2.archive : []
-                }
-              }
-            };
-
-            if (appState.slots.user1?.uid === user.uid) {
-              currentUserId = 'user1';
-              showOnlyScreen('mainAppScreen');
-              renderAll();
-            } else if (appState.slots.user2?.uid === user.uid) {
-              currentUserId = 'user2';
-              showOnlyScreen('mainAppScreen');
-              renderAll();
-            } else {
-              currentUserId = null;
-              if (appState.slots.user1 && appState.slots.user2) {
-                showOnlyScreen('lockedScreen');
-              } else {
-                renderSlotSelection();
-                showOnlyScreen('slotScreen');
-              }
-            }
-          },
-          (error) => {
-            console.error('Firestore 구독 오류:', error);
-            showToast('데이터를 불러오는 중 오류가 발생했습니다.');
-          }
-        );
-      } catch (err) {
-        console.error('초기화 오류:', err);
-        showToast('연결에 실패했습니다. 새로고침해 주세요.');
-      }
-    }
-
-    function renderSlotSelection() {
-      const container = document.getElementById('slotListContainer');
-      const s1 = appState.slots.user1;
-      const s2 = appState.slots.user2;
-
-      container.innerHTML = `
-        <button type="button" class="slot-btn" ${s1 ? 'disabled' : `onclick="claimSlot('user1')"`}>
-          <div>
-            <div style="font-size:0.96rem; font-weight:800; color:#333;">🌷 첫 번째 포도판 (${escapeHtml(appState.users.user1.name)})</div>
-            <div style="font-size:0.78rem; color:#777; margin-top:3px;">
-              ${s1 ? `이미 등록됨 (${escapeHtml(s1.email)})` : '비어 있음 · 눌러서 내 포도판으로 연결'}
-            </div>
-          </div>
-          <span style="font-size:1.2rem;">${s1 ? '🔒' : '👉'}</span>
-        </button>
-
-        <button type="button" class="slot-btn blue" ${s2 ? 'disabled' : `onclick="claimSlot('user2')"`}>
-          <div>
-            <div style="font-size:0.96rem; font-weight:800; color:#333;">🍀 두 번째 포도판 (${escapeHtml(appState.users.user2.name)})</div>
-            <div style="font-size:0.78rem; color:#777; margin-top:3px;">
-              ${s2 ? `이미 등록됨 (${escapeHtml(s2.email)})` : '비어 있음 · 눌러서 내 포도판으로 연결'}
-            </div>
-          </div>
-          <span style="font-size:1.2rem;">${s2 ? '🔒' : '👉'}</span>
-        </button>
-      `;
-    }
-
-    window.claimSlot = async function(slotKey) {
-      if (!currentAuthUser) return;
-      const ok = await openConfirm('이 포도판을 내 전용 판으로 연결할까요?\n연결 후에는 변경할 수 없어요!');
-      if (!ok) return;
-
-      try {
-        const latestSnap = await getDoc(boardDocRef);
-        const latestData = latestSnap.data();
-        if (latestData?.slots?.[slotKey]) {
-          showToast('방금 상대방이 먼저 이 자리를 선택했어요!');
-          return;
-        }
-
-        const chosenName = signupNickname || (slotKey === 'user1' ? '여자친구 🌷' : '남자친구 🍀');
-        await updateDoc(boardDocRef, {
-          [`slots.${slotKey}`]: {
-            uid: currentAuthUser.uid,
-            email: currentAuthUser.email || ''
-          },
-          [`users.${slotKey}.name`]: chosenName
-        });
-        signupNickname = '';
-        showToast('문희사항 자리 연결 완료! 이제 둘만의 기록을 시작하세요 🍇');
-      } catch (err) {
-        console.error(err);
-        showToast('자리 연결 중 오류가 발생했습니다.');
-      }
-    };
-
-    async function saveData() {
-      if (!currentAuthUser || !currentUserId) return;
-      try {
-        await updateDoc(boardDocRef, {
-          terms: appState.terms,
-          users: appState.users,
-          boards: appState.boards
-        });
-      } catch (err) {
-        console.error('저장 오류:', err);
-        showToast('저장에 실패했습니다. 네트워크 상태를 확인해 주세요.');
-      }
-    }
-
-    // =========================================
-    // 2. 모바일 뷰 & 애칭 변경
-    // =========================================
-    window.setMobileView = function(view) {
-      mobileView = view;
-      applyMobileView();
-    };
-
-    function applyMobileView() {
-      if (!currentUserId) return;
-      const partnerId = currentUserId === 'user1' ? 'user2' : 'user1';
-      const myCard = document.getElementById(`card-${currentUserId}`);
-      const partnerCard = document.getElementById(`card-${partnerId}`);
-
-      ['both', 'partner', 'mine'].forEach(key => {
-        const btn = document.getElementById(`mTab-${key}`);
-        if (btn) btn.className = key === mobileView ? 'active' : '';
-      });
-
-      if (mobileView === 'partner') {
-        partnerCard.classList.remove('mobile-hidden');
-        myCard.classList.add('mobile-hidden');
-      } else if (mobileView === 'mine') {
-        myCard.classList.remove('mobile-hidden');
-        partnerCard.classList.add('mobile-hidden');
-      } else {
-        myCard.classList.remove('mobile-hidden');
-        partnerCard.classList.remove('mobile-hidden');
-      }
-    }
-
-    window.openNameModal = function() {
-      if (!currentUserId) return;
-      document.getElementById('nicknameInput').value = appState.users[currentUserId].name;
-      document.getElementById('nameModal').classList.add('active');
-    };
-
-    window.closeNameModal = function() {
-      document.getElementById('nameModal').classList.remove('active');
-    };
-
-    window.saveNewName = async function() {
-      if (!currentUserId) return;
-      const newName = document.getElementById('nicknameInput').value.trim();
-      if (!newName) {
-        showToast('새 애칭을 입력해 주세요!');
-        return;
-      }
-      appState.users[currentUserId].name = newName;
-      closeNameModal();
-      await saveData();
-      showToast('애칭이 변경되었어요!');
-    };
-
-    // =========================================
-    // 3. 이용 약관
-    // =========================================
-    window.openTermsModal = function() {
-      renderTermsView();
-      document.getElementById('termsModal').classList.add('active');
-    };
-
-    window.renderTermsView = function() {
-      const body = document.getElementById('termsBody');
-      const btns = document.getElementById('termsModalBtns');
-      document.getElementById('termsTopEditBtn').style.display = 'block';
-
-      const listHtml = appState.terms.map(t => `<li>${escapeHtml(t)}</li>`).join('');
-      body.innerHTML = `<ul class="terms-list">${listHtml}</ul>`;
-      btns.innerHTML = `<button class="cancel" onclick="closeTermsModal()">확인</button>`;
-    };
-
-    window.openTermsEdit = function() {
-      const body = document.getElementById('termsBody');
-      const btns = document.getElementById('termsModalBtns');
-      document.getElementById('termsTopEditBtn').style.display = 'none';
-
-      const termsText = appState.terms.join('\n');
-      body.innerHTML = `
-        <p style="font-size:0.76rem; color:#888; margin-bottom:6px;">* 줄바꿈으로 약관 항목을 구분해 주세요.</p>
-        <textarea class="terms-textarea" id="termsInput">${escapeHtml(termsText)}</textarea>
-      `;
-      btns.innerHTML = `
-        <button class="cancel" onclick="renderTermsView()">취소</button>
-        <button class="save" onclick="saveTerms()">저장</button>
-      `;
-    };
-
-    window.saveTerms = async function() {
-      const rawText = document.getElementById('termsInput').value;
-      const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-      appState.terms = lines;
-      await saveData();
-      renderTermsView();
-      showToast('이용약관이 저장되었어요!');
-    };
-
-    window.closeTermsModal = function() {
-      document.getElementById('termsModal').classList.remove('active');
-    };
-
-    // =========================================
-    // 4. 포도판 렌더링
-    // =========================================
-    window.switchBoard = async function(userId, tab) {
-      appState.users[userId].activeTab = tab;
-      renderBoard(userId);
-      await saveData();
-    };
-
-    function renderAll() {
-      if (!currentUserId) return;
-      const partnerId = currentUserId === 'user1' ? 'user2' : 'user1';
-      const myName = appState.users[currentUserId].name;
-      const partnerName = appState.users[partnerId].name;
-
-      document.getElementById('myBadge').innerText = `👤 ${myName}`;
-      document.getElementById('mTab-partner').innerText = `💝 ${partnerName}`;
-      document.getElementById('mTab-mine').innerText = `🌷 ${myName}`;
-
-      // PC(2열) 및 둘 다 보기에서 내 판을 왼쪽, 상대 판을 오른쪽에 배치
-      const grid = document.getElementById('dualBoardContainer');
-      grid.appendChild(document.getElementById(`card-${currentUserId}`));
-      grid.appendChild(document.getElementById(`card-${partnerId}`));
-
-      applyMobileView();
-      renderBoard('user1');
-      renderBoard('user2');
-    }
-
-    function renderBoard(userId) {
-      const isMe = (userId === currentUserId);
-      const tab = appState.users[userId].activeTab;
-      const board = appState.boards[userId][tab];
-      const container = document.getElementById(`grape-${userId}`);
-      const toggle = document.getElementById(`toggle-${userId}`);
-      const memoSection = document.getElementById(`memoSection-${userId}`);
-
-      document.getElementById(`nameDisplay-${userId}`).innerText = appState.users[userId].name;
-      const rolePill = document.getElementById(`rolePill-${userId}`);
-      const editNameBtn = document.getElementById(`editNameBtn-${userId}`);
-
-      if (isMe) {
-        rolePill.innerText = '내 판 (스티커 주기 불가)';
-        rolePill.className = 'role-pill mine';
-        editNameBtn.classList.remove('hidden');
-      } else {
-        rolePill.innerText = '상대 판 (터치해서 선물)';
-        rolePill.className = 'role-pill partner';
-        editNameBtn.classList.add('hidden');
-      }
-
-      if (tab === 'bad') {
-        container.classList.add('bad-mode');
-        toggle.classList.add('bad-mode');
-        memoSection.classList.add('bad-mode');
-      } else {
-        container.classList.remove('bad-mode');
-        toggle.classList.remove('bad-mode');
-        memoSection.classList.remove('bad-mode');
-      }
-
-      const card = document.getElementById(`card-${userId}`);
-      const btns = card.querySelectorAll('.board-toggle button');
-      btns[0].className = tab === 'like' ? 'active like' : '';
-      btns[1].className = tab === 'bad' ? 'active bad' : '';
-
-      const totalCount = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
-      document.getElementById(`vol-${userId}`).innerText = `${tab === 'like' ? '좋아요' : '나빠요'} Vol. ${board.currentVol}`;
-      const countEl = document.getElementById(`count-${userId}`);
-      countEl.innerText = `${totalCount} / 15개`;
-      countEl.style.color = tab === 'bad' ? '#5b7bb2' : '#ff6b81';
-
-      container.innerHTML = '';
-      const layout = [5, 4, 3, 2, 1];
-      let stickerIdx = 0;
-
-      layout.forEach(rowCount => {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'grape-row';
-
-        for (let i = 0; i < rowCount; i++) {
-          const grapeIndex = stickerIdx;
-          const grape = document.createElement('div');
-          grape.className = 'grape-grape';
-
-          let accumulated = 0;
-          let filledType = null;
-          let itemData = null;
-          let itemArrayIndex = -1;
-
-          for (let idx = 0; idx < board.stickers.length; idx++) {
-            const item = board.stickers[idx];
-            accumulated += item.value;
-            if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
-              itemData = item;
-              itemArrayIndex = idx;
-              if (accumulated >= grapeIndex + 1) {
-                filledType = 'full';
-              } else if (accumulated > grapeIndex) {
-                filledType = 'half';
-              }
-            }
-          }
-
-          if (filledType) {
-            grape.classList.add(filledType, tab);
-            grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
-            grape.onclick = () => showStickerDetail(userId, itemData, itemArrayIndex, tab);
-          } else {
-            grape.innerText = grapeIndex + 1;
-            if (isMe) {
-              grape.classList.add('own-empty');
-              grape.onclick = () => showToast('본인의 포도판에는 스티커를 붙일 수 없어요! 상대방 판을 눌러주세요 🍇');
-            } else {
-              grape.onclick = () => handleGrapeClick(userId);
-            }
-          }
-
-          rowDiv.appendChild(grape);
-          stickerIdx++;
-        }
-        container.appendChild(rowDiv);
-      });
-
-      renderMemo(userId, tab, memoSection);
-    }
-
-    // =========================================
-    // 5. '다 모으면(바라는 것)' 권한 로직
-    //    - 좋아요(like): 본인 판만 작성 가능
-    //    - 나빠요(bad): 상대 판만 작성 가능
-    // =========================================
-    function renderMemo(userId, tab, memoSection) {
-      const board = appState.boards[userId][tab];
-      const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
-      const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
-      const canEdit = isMyLikeBoard || isOtherBadBoard;
-
-      const icon = tab === 'like' ? '✨' : '🔥';
-      const hintLabel = tab === 'like'
-        ? (userId === currentUserId ? '내가 다 모았을 때 바라는 소원' : `${appState.users[userId].name}님이 바라는 소원`)
-        : (userId !== currentUserId ? '상대방 나빠요 판이 다 차면 바라는 것' : '상대방이 나에게 바라는 것');
-
-      memoSection.innerHTML = `
-        <div class="memo-role-label">${escapeHtml(hintLabel)}</div>
-        <div class="memo-line">
-          <span id="memoTextDisplay-${userId}"></span>
-          <div id="memoActionBtns-${userId}"></div>
-        </div>
-      `;
-
-      const displaySpan = document.getElementById(`memoTextDisplay-${userId}`);
-      const actionBtns = document.getElementById(`memoActionBtns-${userId}`);
-
-      if (board.memo) {
-        displaySpan.innerText = `다 모으면: ${icon}${board.memo}${icon}`;
-        if (canEdit) {
-          actionBtns.innerHTML = `
-            <div class="memo-btns">
-              <button class="memo-edit-btn" onclick="editMemo('${userId}', '${tab}')">수정</button>
-              <button class="memo-del-btn" onclick="deleteMemo('${userId}', '${tab}')">삭제</button>
-            </div>
-          `;
-        }
-      } else {
-        if (canEdit) {
-          displaySpan.innerHTML = `<span style="color:#999; cursor:pointer; font-weight:500;" onclick="editMemo('${userId}', '${tab}')">당신이 바라는 것은? (눌러서 작성)</span>`;
-        } else {
-          displaySpan.innerHTML = `<span style="color:#aaa; font-weight:500;">아직 등록된 내용이 없습니다.</span>`;
-        }
-      }
-    }
-
-    window.editMemo = function(userId, tab) {
-      const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
-      const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
-      if (!isMyLikeBoard && !isOtherBadBoard) {
-        showToast('작성 권한이 없는 칸이에요! (좋아요는 내 판, 나빠요는 상대 판)');
-        return;
-      }
-
-      const board = appState.boards[userId][tab];
-      const memoSection = document.getElementById(`memoSection-${userId}`);
-      memoSection.innerHTML = `
-        <textarea class="memo-textarea" id="memoInput-${userId}" placeholder="다 모으면 바라는 것을 입력하세요">${escapeHtml(board.memo || '')}</textarea>
-        <div class="memo-btns">
-          <button class="memo-edit-btn" onclick="renderBoard('${userId}')">취소</button>
-          <button class="memo-save-btn" onclick="saveMemo('${userId}', '${tab}')">저장</button>
-        </div>
-      `;
-    };
-
-    window.saveMemo = async function(userId, tab) {
-      const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
-      const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
-      if (!isMyLikeBoard && !isOtherBadBoard) return;
-
-      const inputVal = document.getElementById(`memoInput-${userId}`).value.trim();
-      appState.boards[userId][tab].memo = inputVal;
-      await saveData();
-      showToast('저장되었습니다!');
-    };
-
-    window.deleteMemo = async function(userId, tab) {
-      const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
-      const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
-      if (!isMyLikeBoard && !isOtherBadBoard) return;
-
-      const ok = await openConfirm('작성한 내용을 삭제하시겠습니까?');
-      if (!ok) return;
-
-      appState.boards[userId][tab].memo = '';
-      await saveData();
-      showToast('삭제되었습니다.');
-    };
-
-    // =========================================
-    // 6. 스티커 부착, 수정, 삭제
-    // =========================================
-    window.handleGrapeClick = function(targetUserId) {
-      if (currentUserId === targetUserId) {
-        showToast('본인의 포도판에는 스티커를 붙일 수 없어요!');
-        return;
-      }
-
-      const tab = appState.users[targetUserId].activeTab;
-      const board = appState.boards[targetUserId][tab];
-      const totalCount = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
-
-      if (totalCount >= 15) {
-        showToast('이미 15개가 완성된 판입니다.');
-        return;
-      }
-
-      const today = getTodayString();
-      const todayStickers = board.stickers.filter(s => s.date === today && s.from === currentUserId);
-      const todaySum = todayStickers.reduce((acc, s) => acc + s.value, 0);
-
-      if (todaySum >= 3) {
-        showToast(`하루에 줄 수 있는 ${tab === 'like' ? '좋아요' : '나빠요'} 스티커는 최대 3개예요!`);
-        return;
-      }
-
-      selectedTargetUser = targetUserId;
-      selectValue(1);
-
-      document.getElementById('modalTitle').innerText = `${appState.users[targetUserId].name}님에게 ${tab === 'like' ? '💖 좋아요' : '💔 나빠요'} 스티커`;
-      document.getElementById('stickerReason').value = '';
-      document.getElementById('addModal').classList.add('active');
-    };
-
-    window.closeAddModal = function() {
-      document.getElementById('addModal').classList.remove('active');
-    };
-
-    window.selectValue = function(val) {
-      selectedVal = val;
-      document.getElementById('val-1').className = val === 1 ? 'selected' : '';
-      document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
-    };
-
-    window.submitSticker = async function() {
-      if (!selectedTargetUser || selectedTargetUser === currentUserId) return;
-
-      const reason = document.getElementById('stickerReason').value.trim();
-      if (!reason) {
-        showToast('사유를 입력해 주세요!');
-        return;
-      }
-
-      const tab = appState.users[selectedTargetUser].activeTab;
-      const board = appState.boards[selectedTargetUser][tab];
-      const today = getTodayString();
-
-      const todaySum = board.stickers
-        .filter(s => s.date === today && s.from === currentUserId)
-        .reduce((acc, s) => acc + s.value, 0);
-      if (todaySum + selectedVal > 3) {
-        showToast(`오늘 남은 스티커 한도는 ${3 - todaySum}개입니다!`);
-        return;
-      }
-
-      const duplicateReason = board.stickers.some(
-        s => s.from === currentUserId && s.reason.trim().toLowerCase() === reason.toLowerCase()
-      );
-      if (duplicateReason) {
-        showToast('한 가지 일(동일한 사유)에는 최대 1개 스티커만 줄 수 있어요!');
-        return;
-      }
-
-      board.stickers.push({
-        value: selectedVal,
-        reason: reason,
-        date: today,
-        from: currentUserId
-      });
-
-      const totalCount = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
-      let isCompleted = false;
-
-      if (totalCount >= 15) {
-        isCompleted = true;
-        appState.boards[selectedTargetUser].archive.push({
-          vol: board.currentVol,
-          type: tab,
-          stickers: [...board.stickers],
-          memo: board.memo,
-          completedDate: today
-        });
-
-        board.currentVol += 1;
-        board.stickers = [];
-        board.memo = '';
-      }
-
-      closeAddModal();
-      await saveData();
-
-      if (isCompleted) {
-        showToast('🎉 포도판 15개 완성! 보관함에 저장되고 새 판이 열렸어요!');
-      } else {
-        showToast('포도알 스티커를 붙였어요! 🍇');
-      }
-    };
-
-    window.showStickerDetail = function(targetUserId, item, itemArrayIndex, tab) {
-      if (!item) return;
-      currentActiveIndex = itemArrayIndex;
-      currentActiveTargetUser = targetUserId;
-      currentActiveTab = tab;
-
-      const giverName = appState.users[item.from]?.name || '상대방';
-      document.getElementById('detailTitle').innerText = `${tab === 'like' ? '💖 좋아요' : '💔 나빠요'} 포도알 사유`;
-
-      const bodyDiv = document.getElementById('detailContentBody');
-      bodyDiv.innerHTML = `
-        <div style="background:#fff9fb; padding:12px 14px; border-radius:14px; border:1px solid #ffe4e1;">
-          <b>보낸 사람:</b> ${escapeHtml(giverName)}<br>
-          <b>날짜:</b> ${escapeHtml(item.date)} · <b>스티커:</b> ${item.value}개<br><br>
-          <b>📝 사유:</b><br>
-          <span id="reasonText" style="color:#333; font-weight:600; word-break:break-word;">${escapeHtml(item.reason)}</span>
-        </div>
-      `;
-
-      const btnsDiv = document.getElementById('detailModalBtns');
-      if (item.from === currentUserId) {
-        btnsDiv.innerHTML = `
-          <button class="delete-btn" onclick="deleteSticker()">삭제</button>
-          <button class="edit-btn" onclick="openEditReason()">수정</button>
-          <button class="cancel" onclick="closeDetailModal()">닫기</button>
-        `;
-      } else {
-        btnsDiv.innerHTML = `
-          <button class="cancel" onclick="closeDetailModal()">닫기</button>
-        `;
-      }
-
-      document.getElementById('detailModal').classList.add('active');
-    };
-
-    window.openEditReason = function() {
-      const board = appState.boards[currentActiveTargetUser][currentActiveTab];
-      const item = board.stickers[currentActiveIndex];
-      if (!item || item.from !== currentUserId) return;
-
-      const bodyDiv = document.getElementById('detailContentBody');
-      bodyDiv.innerHTML = `
-        <b>📝 사유 수정:</b><br>
-        <textarea id="editReasonText" style="width:100%; height:84px; padding:10px; border:1.5px solid #ffe4e1; border-radius:12px; margin-top:6px; resize:none;">${escapeHtml(item.reason)}</textarea>
-      `;
-
-      const btnsDiv = document.getElementById('detailModalBtns');
-      btnsDiv.innerHTML = `
-        <button class="cancel" onclick="showStickerDetail(currentActiveTargetUser, appState.boards[currentActiveTargetUser][currentActiveTab].stickers[currentActiveIndex], currentActiveIndex, currentActiveTab)">취소</button>
-        <button class="save" onclick="saveEditedReason()">저장</button>
-      `;
-    };
-
-    window.saveEditedReason = async function() {
-      const newReason = document.getElementById('editReasonText').value.trim();
-      if (!newReason) {
-        showToast('사유를 입력해 주세요!');
-        return;
-      }
-
-      const board = appState.boards[currentActiveTargetUser][currentActiveTab];
-      const item = board.stickers[currentActiveIndex];
-      if (!item || item.from !== currentUserId) return;
-
-      item.reason = newReason;
-      closeDetailModal();
-      await saveData();
-      showToast('사유가 수정되었어요!');
-    };
-
-    window.deleteSticker = async function() {
-      const board = appState.boards[currentActiveTargetUser][currentActiveTab];
-      const item = board.stickers[currentActiveIndex];
-      if (!item || item.from !== currentUserId) return;
-
-      const ok = await openConfirm('정말 이 스티커를 삭제(취소)하시겠습니까?');
-      if (!ok) return;
-
-      board.stickers.splice(currentActiveIndex, 1);
-      closeDetailModal();
-      await saveData();
-      showToast('스티커가 삭제되었습니다.');
-    };
-
-    window.closeDetailModal = function() {
-      document.getElementById('detailModal').classList.remove('active');
-    };
-
-    // =========================================
-    // 7. 보관함
-    // =========================================
-    window.openArchiveModal = function() {
-      document.getElementById('filter-user1').innerText = appState.users.user1.name;
-      document.getElementById('filter-user2').innerText = appState.users.user2.name;
-      filterArchive(currentUserId || 'user1');
-      document.getElementById('archiveModal').classList.add('active');
-    };
-
-    window.closeArchiveModal = function() {
-      document.getElementById('archiveModal').classList.remove('active');
-    };
-
-    window.filterArchive = function(userId) {
-      document.getElementById('filter-user1').className = userId === 'user1' ? 'selected' : '';
-      document.getElementById('filter-user2').className = userId === 'user2' ? 'selected' : '';
-
-      const listDiv = document.getElementById('archiveList');
-      const archive = appState.boards[userId].archive || [];
-
-      if (archive.length === 0) {
-        listDiv.innerHTML = `<p style="text-align:center; padding: 24px 10px; color:#aaa; font-size:0.82rem;">아직 완성된 포도판이 없습니다.</p>`;
-        return;
-      }
-
-      listDiv.innerHTML = '';
-      [...archive].reverse().forEach((item) => {
-        const card = document.createElement('div');
-        card.className = `archive-card ${item.type === 'bad' ? 'bad' : ''}`;
-        const typeLabel = item.type === 'like' ? '좋아요' : '나빠요';
-        const icon = item.type === 'like' ? '✨' : '🔥';
-
-        const stickerListHtml = item.stickers.map(s =>
-          `<li style="font-size:0.78rem; margin-top:4px; color:#666;">[${escapeHtml(s.date)}] (${s.value}개) ${escapeHtml(s.reason)}</li>`
-        ).join('');
-
-        card.innerHTML = `
-          <div class="archive-card-header">
-            <span>${typeLabel} Vol. ${item.vol}</span>
-            <span style="font-weight:normal; color:#888;">완성일: ${escapeHtml(item.completedDate)}</span>
-          </div>
-          ${item.memo ? `<div style="font-size:0.78rem; color:#444; margin:4px 0; background:rgba(255,255,255,0.65); padding:5px 8px; border-radius:8px; font-weight:600;">다 모으면: ${icon}${escapeHtml(item.memo)}${icon}</div>` : ''}
-          <ul style="padding-left: 16px;">
-            ${stickerListHtml}
-          </ul>
-        `;
-        listDiv.appendChild(card);
-      });
-    };
-  </script>
+  }
+</script>
 </body>
 </html>
