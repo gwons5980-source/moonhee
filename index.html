@@ -70,7 +70,6 @@
     .modal { background: white; border-radius: 24px; padding: 22px; width: 90%; max-width: 380px; max-height: 80vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--pink-soft); }
     .modal-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .modal h3 { font-size: 1.05rem; color: #333; }
-    .small-edit-btn { background: #f0f0f0; border: none; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #555; cursor: pointer; }
     .modal-options { display: flex; gap: 8px; margin-bottom: 12px; }
     .modal-options button { flex: 1; padding: 9px; border: 1px solid var(--border-color); border-radius: 12px; background: white; color: #666; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     .modal-options button.selected { border-color: var(--pink-main); background: var(--pink-soft); color: var(--pink-dark); }
@@ -387,12 +386,11 @@
   function renderMemo(userId, tab, memoSection) {
     const board = appState.boards[userId][tab];
     
-    // 권한 규칙 적용:
-    // 1. 좋아요 판: 본인 카드일 때만 본인이 작성/수정 가능 (내 바라는 것)
-    // 2. 나빠요 판: 상대방 카드일 때만 내가 작성/수정 가능 (상대방이 바라는 것)
-    const isMyLikeBoard = (tab === 'like' && userId === currentUserId);
-    const isOtherBadBoard = (tab === 'bad' && userId !== currentUserId);
-    const canEdit = isMyLikeBoard || isOtherBadBoard;
+    // 💡 엄격한 권한 분리 로직:
+    // 1. 좋아요 판(like): 해당 카드의 주인이 '나'일 때만 내가 작성/수정 가능 (내 판에 내가 바라는 것)
+    // 2. 나빠요 판(bad): 해당 카드의 주인이 '상대방'일 때만 내가 작성/수정 가능 (상대방 판에 내가 바라는 것)
+    const isMyCard = (userId === currentUserId);
+    const canEdit = (tab === 'like' && isMyCard) || (tab === 'bad' && !isMyCard);
     const icon = tab === 'like' ? '✨' : '🔥';
 
     memoSection.innerHTML = `<div class="memo-line"><span id="memoTextDisplay-${userId}"></span><div id="memoActionBtns-${userId}"></div></div>`;
@@ -510,12 +508,12 @@
   function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
   function openTermsModal() { 
     const termsBody = document.getElementById('termsBody');
-    termsBody.innerHTML = `<ul class="terms-list">` + appState.terms.map(t => `<li>${t}</li>`).join('') + `</ul>`;
+    termsBody.innerHTML = `<ul style="padding-left:18px; line-height:1.6; font-size:0.88rem; color:#555;">` + appState.terms.map(t => `<li style="margin-bottom:8px;">${t}</li>`).join('') + `</ul>`;
     document.getElementById('termsModal').classList.add('active'); 
   }
   function closeTermsModal() { document.getElementById('termsModal').classList.remove('active'); }
   function openArchiveModal() { filterArchive('user1'); document.getElementById('archiveModal').classList.add('active'); }
-  function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('archiveModal'); document.getElementById('archiveModal').classList.remove('active'); }
+  function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
   function filterArchive(userId) {
     document.getElementById('filter-user1').className = userId === 'user1' ? 'selected' : '';
