@@ -260,8 +260,8 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null; // { userId, index }
-  let currentEditingArchiveItem = null; // 보관함 포도판 수정 중 선택한 개별 스티커
+  let editingArchiveTarget = null;
+  let currentEditingArchiveItem = null;
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -310,6 +310,16 @@
     }
 
     if (!appState.requests) appState.requests = [];
+    
+    // 구조 안정화 체크 (누락된 보관함/볼륨 방어)
+    ['user1', 'user2'].forEach(u => {
+      ['like', 'bad'].forEach(t => {
+        if (!appState.boards[u][t]) appState.boards[u][t] = { currentVol: 1, stickers: [], memo: '' };
+        if (typeof appState.boards[u][t].currentVol !== 'number') appState.boards[u][t].currentVol = 1;
+        if (!Array.isArray(appState.boards[u][t].stickers)) appState.boards[u][t].stickers = [];
+      });
+      if (!Array.isArray(appState.boards[u].archive)) appState.boards[u].archive = [];
+    });
 
     if (appState.users.user1.ownerEmail === email) currentUserId = 'user1';
     else if (appState.users.user2.ownerEmail === email) currentUserId = 'user2';
@@ -559,6 +569,7 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
+  // 💡 포도판 완성 및 새 판 생성 로직 강화
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
@@ -576,16 +587,30 @@
 
       board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId });
 
-      if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
-        appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
-        board.currentVol += 1; 
-        board.stickers = []; 
+      // 총합이 15 이상이면 판 완성 처리
+      let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+      if (newTotal >= 15) {
+        if (!Array.isArray(appState.boards[selectedTargetUser].archive)) {
+          appState.boards[selectedTargetUser].archive = [];
+        }
+
+        appState.boards[selectedTargetUser].archive.push({
+          vol: board.currentVol,
+          type: tab,
+          stickers: [...board.stickers],
+          memo: board.memo,
+          completedDate: today
+        });
+
+        // 새로운 판으로 확실하게 리셋 및 볼륨 증가
+        board.currentVol += 1;
+        board.stickers = [];
         board.memo = '';
 
         if (secondPart > 0) {
           board.stickers.push({ value: secondPart, reason: `${reason} (이월)`, date: today, from: currentUserId });
         }
-        alert('🎉 포도판 완성으로 보관함에 이관되었고, 초과된 스티커는 다음 판에 이월되었습니다!');
+        alert('🎉 포도판이 완성되어 보관함에 저장되고, 새로운 판(Vol. ' + board.currentVol + ')이 생성되었습니다!');
       } else {
         alert('좋아요 스티커가 정상적으로 부여되었습니다!');
       }
@@ -705,16 +730,28 @@
 
     board.stickers.push({ value: firstPart, reason: req.reason, date: req.date, from: req.from });
 
-    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
-      alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
-      appState.boards[currentUserId].archive.push({ vol: board.currentVol, type: req.type, stickers: [...board.stickers], memo: board.memo, completedDate: req.date });
-      board.currentVol += 1; 
-      board.stickers = []; 
+    let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    if (newTotal >= 15) {
+      if (!Array.isArray(appState.boards[currentUserId].archive)) {
+        appState.boards[currentUserId].archive = [];
+      }
+
+      appState.boards[currentUserId].archive.push({
+        vol: board.currentVol,
+        type: req.type,
+        stickers: [...board.stickers],
+        memo: board.memo,
+        completedDate: req.date
+      });
+
+      board.currentVol += 1;
+      board.stickers = [];
       board.memo = '';
 
       if (secondPart > 0) {
         board.stickers.push({ value: secondPart, reason: `${req.reason} (이월)`, date: req.date, from: req.from });
       }
+      alert('🎉 포도판 완성! 보관함에 이관되고 새 판이 생성되었습니다.');
     }
 
     req.status = 'accepted';
@@ -789,8 +826,10 @@
     document.getElementById('filter-user2').className = userId === otherUserId ? 'selected' : '';
 
     const listDiv = document.getElementById('archiveList');
+    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
     const archive = appState.boards[userId].archive;
-    if (!archive || archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
+
+    if (archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
@@ -828,6 +867,7 @@
   }
 
   async function restoreLatestArchive(userId) {
+    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
     const archive = appState.boards[userId].archive;
     if (archive.length === 0) return;
 
@@ -846,7 +886,6 @@
     alert('포도판이 성공적으로 복구되었습니다!');
   }
 
-  // 💡 보관된 판을 실제 포도판 형태로 열어서 수정/삭제하는 기능
   function openArchiveEdit(userId, index) {
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
@@ -882,7 +921,6 @@
         if (filledType) {
           grape.classList.add(filledType, item.type);
           grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          // 포도알을 누르면 해당 스티커 상세/삭제 창 오픈
           grape.onclick = () => openArchiveItemDetail(itemData);
         } else {
           grape.innerText = grapeIndex + 1;
@@ -898,10 +936,9 @@
 
   function closeArchiveEditModal() {
     document.getElementById('archiveEditModal').classList.remove('active');
-    openArchiveModal(); // 보관함 목록 갱신
+    openArchiveModal();
   }
 
-  // 보관함 포도판 내 특정 스티커 클릭 시 상세 및 삭제
   function openArchiveItemDetail(item) {
     currentEditingArchiveItem = item;
     document.getElementById('archiveItemDetailBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
@@ -917,15 +954,14 @@
     if (!editingArchiveTarget || !currentEditingArchiveItem) return;
 
     const { userId, index } = editingArchiveTarget;
+    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    // 스티커 배열에서 제거
     const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveItem);
     if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
 
-    // 보관함에서 해당 판을 꺼내어 현재 진행 중인 판의 맨 앞에 합치기
-    archive.splice(index, 1); // 보관함에서 제거
+    archive.splice(index, 1);
     const activeTab = archivedBoard.type;
     const activeBoard = appState.boards[userId][activeTab];
 
