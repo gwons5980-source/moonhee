@@ -195,7 +195,7 @@
   </div>
 </div>
 
-<!-- 보관된 판 수정용 모달 (포도판 형태로 표시) -->
+<!-- 보관된 판 수정용 모달 -->
 <div class="modal-overlay" id="archiveEditModal">
   <div class="modal" style="max-width: 400px;">
     <div class="modal-header-flex">
@@ -238,10 +238,13 @@
 
   const defaultTerms = [
     "하루에 스티커는 최대 3개까지만 줄 수 있어요.",
-    "한 가지 일에는 최대 1개 스티커만 줄 수 있어요.",
-    "바라는 것의 금전적인 한도는 최대 3만 원이에요.",
-    "좋아요 완성 판 5개 모으면 한 달간 당신이 왕이에요!",
-    "안 준 스티커는 내일로 이월되지 않아요.",
+    "한 가지 일에는 스티커 최대 1개만 줄 수 있어요.",
+    "안 준 스티커는 이월되지 않아요.",
+    "판 1개 완성 보상: 금전 5만 원 / 행위 4시간",
+    "좋아요 판 5개 완성 보상: 금전 15만 원 / 행위 24시간",
+    "나빠요 판 3개 완성 처벌: 금전 30만 원 / 행위 2주",
+    "1판 완성 보상 기한: 30일 (조율 가능)",
+    "N판 완성 보상 기한: 무기한",
     "사유를 잘못 적었을 땐 상대방 화면에서 언제든 수정/삭제가 가능해요."
   ];
 
@@ -259,7 +262,7 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null; // { userId, index }
+  let editingArchiveTarget = null;
   let currentEditingArchiveItem = null;
 
   window.onload = async function() {
@@ -928,17 +931,15 @@
     currentEditingArchiveItem = item;
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
-    const isLatest = (index === archive.length - 1); // 가장 최근 직전 판인지 확인
+    const isLatest = (index === archive.length - 1);
 
     document.getElementById('archiveItemModalTitle').innerText = '🍇 스티커 정보';
     document.getElementById('archiveItemDetailBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
     
     const btnsDiv = document.getElementById('archiveItemModalBtns');
     if (isLatest) {
-      // 직전 판일 때만 삭제 버튼 노출
       btnsDiv.innerHTML = `<button class="delete-btn" onclick="deleteArchiveStickerItem()">삭제하기</button><button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
     } else {
-      // 전전전 판 등은 수정/삭제 불가 안내 또는 닫기만
       btnsDiv.innerHTML = `<button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>`;
     }
 
@@ -960,7 +961,6 @@
     const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveItem);
     if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
 
-    // 스티커가 삭제되어 15개 미만이 되면 자동으로 현재 진행 판으로 복구되도록 처리
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
     
