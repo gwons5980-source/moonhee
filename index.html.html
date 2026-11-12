@@ -30,7 +30,6 @@
         .grape-shadow {
             box-shadow: inset -2px -3px 6px rgba(0,0,0,0.12), 2px 4px 8px rgba(0,0,0,0.08);
         }
-        /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -57,8 +56,8 @@
             </div>
             <div id="auth-panel">
                 <div class="flex gap-2 mb-4">
-                    <button id="login-tab" onclick="showAuthMode('login')" class="flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white">로그인</button>
-                    <button id="signup-tab" onclick="showAuthMode('signup')" class="flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600">회원가입</button>
+                    <button type="button" id="login-tab" onclick="showAuthMode('login')" class="flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white cursor-pointer">로그인</button>
+                    <button type="button" id="signup-tab" onclick="showAuthMode('signup')" class="flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600 cursor-pointer">회원가입</button>
                 </div>
                 <form id="auth-form" onsubmit="submitAuth(event)" class="space-y-3">
                     <div>
@@ -69,7 +68,7 @@
                         <label class="block text-xs font-bold text-gray-700 mb-1">비밀번호</label>
                         <input id="auth-password" type="password" required minlength="6" autocomplete="current-password" placeholder="6자 이상" class="w-full border border-gray-200 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-amber-300">
                     </div>
-                    <button id="auth-submit" type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm">로그인</button>
+                    <button id="auth-submit" type="submit" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm cursor-pointer">로그인</button>
                 </form>
                 <p class="text-[11px] text-gray-400 leading-relaxed mt-4">아이디는 실제 이메일이 아닌 로그인용 아이디로 사용합니다. 비밀번호는 다른 사람과 공유하지 마세요.</p>
             </div>
@@ -78,15 +77,15 @@
                 <div class="rounded-2xl border border-pink-100 bg-pink-50 p-4">
                     <h3 class="font-bold text-sm text-pink-800 mb-1">처음 사용하는 사람</h3>
                     <p class="text-xs text-gray-600 mb-3">현재 기기에 저장된 포도판 기록이 있다면 새 공유 공간의 초기 기록으로 가져옵니다.</p>
-                    <button onclick="createGrapeRoom()" class="w-full py-2.5 rounded-xl bg-pink-500 text-white text-sm font-bold">우리 포도판 만들기</button>
+                    <button type="button" onclick="createGrapeRoom()" class="w-full py-2.5 rounded-xl bg-pink-500 text-white text-sm font-bold cursor-pointer">우리 포도판 만들기</button>
                 </div>
                 <div class="rounded-2xl border border-sky-100 bg-sky-50 p-4">
                     <h3 class="font-bold text-sm text-sky-800 mb-1">초대받은 사람</h3>
                     <p class="text-xs text-gray-600 mb-2">상대방에게 받은 8자리 초대 코드를 입력하세요.</p>
                     <input id="join-code" maxlength="8" placeholder="초대 코드 8자리" class="w-full border border-gray-200 rounded-xl p-3 text-sm text-center tracking-[0.25em] uppercase mb-2">
-                    <button onclick="joinGrapeRoom()" class="w-full py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold">초대 코드로 참여하기</button>
+                    <button type="button" onclick="joinGrapeRoom()" class="w-full py-2.5 rounded-xl bg-sky-600 text-white text-sm font-bold cursor-pointer">초대 코드로 참여하기</button>
                 </div>
-                <button onclick="signOutGrape()" class="w-full text-xs text-gray-500 underline">다른 아이디로 로그인</button>
+                <button type="button" onclick="signOutGrape()" class="w-full text-xs text-gray-500 underline cursor-pointer">다른 아이디로 로그인</button>
             </div>
             <p id="gate-message" class="text-xs text-center text-rose-600 mt-4 whitespace-pre-line"></p>
         </div>
@@ -102,8 +101,8 @@
             
             <div class="flex items-center flex-wrap gap-2">
                 <span class="text-xs font-semibold text-gray-600 bg-white/80 px-3 py-2 rounded-full">접속: <b id="current-user-name">사용자 A</b></span>
-                <button id="invite-code-btn" onclick="copyInviteCode()" class="px-3 py-2 rounded-full text-xs font-bold bg-white border border-amber-300 text-amber-800">초대 코드</button>
-                <button onclick="signOutGrape()" class="px-3 py-2 rounded-full text-xs font-bold bg-amber-700 text-white">로그아웃</button>
+                <button type="button" id="invite-code-btn" onclick="copyInviteCode()" class="px-3 py-2 rounded-full text-xs font-bold bg-white border border-amber-300 text-amber-800">초대 코드</button>
+                <button type="button" onclick="signOutGrape()" class="px-3 py-2 rounded-full text-xs font-bold bg-amber-700 text-white">로그아웃</button>
             </div>
         </div>
     </header>
@@ -113,7 +112,6 @@
 
         <!-- Top User Profiles Summary & Name Edit -->
         <section class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- User 1 Summary -->
             <div id="card-user1" class="bg-white rounded-2xl p-4 shadow-md border-2 border-pink-200 flex items-center justify-between transition-all">
                 <div class="flex items-center space-x-3">
                     <div class="w-11 h-11 bg-pink-100 rounded-full flex items-center justify-center text-2xl shadow-inner border border-pink-300">
@@ -122,7 +120,7 @@
                     <div>
                         <div class="flex items-center space-x-1.5">
                             <h2 class="font-bold text-base text-gray-800" id="name-display-user1">사용자 A</h2>
-                            <button onclick="openEditNameModal('user1')" class="text-gray-400 hover:text-gray-600 text-xs">
+                            <button type="button" onclick="openEditNameModal('user1')" class="text-gray-400 hover:text-gray-600 text-xs">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
                         </div>
@@ -131,7 +129,6 @@
                 </div>
             </div>
 
-            <!-- User 2 Summary -->
             <div id="card-user2" class="bg-white rounded-2xl p-4 shadow-md border-2 border-sky-200 flex items-center justify-between transition-all">
                 <div class="flex items-center space-x-3">
                     <div class="w-11 h-11 bg-sky-100 rounded-full flex items-center justify-center text-2xl shadow-inner border border-sky-300">
@@ -140,7 +137,7 @@
                     <div>
                         <div class="flex items-center space-x-1.5">
                             <h2 class="font-bold text-base text-gray-800" id="name-display-user2">사용자 B</h2>
-                            <button onclick="openEditNameModal('user2')" class="text-gray-400 hover:text-gray-600 text-xs">
+                            <button type="button" onclick="openEditNameModal('user2')" class="text-gray-400 hover:text-gray-600 text-xs">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
                         </div>
@@ -161,26 +158,24 @@
             </div>
         </div>
 
-        <!-- Navigation Tabs: Grape Board Types & Archive -->
+        <!-- Navigation Tabs -->
         <div class="flex flex-wrap border-b border-gray-200 gap-1 sm:gap-2">
-            <button id="tab-good-btn" onclick="switchBoardType('good')" class="px-4 py-2.5 font-bold text-xs sm:text-sm rounded-t-xl border-b-2 border-pink-500 text-pink-600 bg-white shadow-sm flex items-center space-x-1.5 transition-all">
+            <button type="button" id="tab-good-btn" onclick="switchBoardType('good')" class="px-4 py-2.5 font-bold text-xs sm:text-sm rounded-t-xl border-b-2 border-pink-500 text-pink-600 bg-white shadow-sm flex items-center space-x-1.5 transition-all">
                 <span>💖</span>
                 <span>좋아요 포도판</span>
             </button>
-            <button id="tab-bad-btn" onclick="switchBoardType('bad')" class="px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-indigo-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5">
+            <button type="button" id="tab-bad-btn" onclick="switchBoardType('bad')" class="px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-indigo-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5">
                 <span>💔</span>
                 <span>나빠요 포도판</span>
             </button>
-            <button id="tab-archive-btn" onclick="switchTab('archive')" class="px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-amber-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5 ml-auto">
+            <button type="button" id="tab-archive-btn" onclick="switchTab('archive')" class="px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-amber-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5 ml-auto">
                 <i class="fa-solid fa-box-archive"></i>
                 <span>완성 판 보관함</span>
             </button>
         </div>
 
-        <!-- ================= TAB 1: MAIN SINGLE GRAPE BOARD ================= -->
+        <!-- TAB 1: MAIN GRAPE BOARD -->
         <div id="tab-board" class="space-y-6">
-
-            <!-- Action Ribbon (Award Sticker) -->
             <div id="action-ribbon" class="bg-gradient-to-r from-pink-50 via-rose-50 to-amber-50 rounded-2xl p-4 border border-pink-200 shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 transition-all">
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 flex items-center gap-1.5">
@@ -191,14 +186,13 @@
                 </div>
                 
                 <div class="flex items-center gap-2 w-full md:w-auto">
-                    <button id="award-btn" onclick="openAwardModalCurrent()" class="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5">
+                    <button type="button" id="award-btn" onclick="openAwardModalCurrent()" class="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-pink-400 to-rose-400 hover:from-pink-500 hover:to-rose-500 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-lg active:scale-95 transition-all flex items-center justify-center space-x-1.5">
                         <span id="award-btn-icon" class="text-sm">💖</span>
                         <span id="award-btn-label">좋아요 스티커 주기</span>
                     </button>
                 </div>
             </div>
 
-            <!-- Two users' boards shown together -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div id="board-card-user1" class="bg-white rounded-3xl border-2 border-pink-200 shadow-lg overflow-hidden flex flex-col relative transition-all">
                     <div class="absolute -top-1 left-6 text-3xl z-10">🍃</div>
@@ -234,10 +228,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- ================= TAB 2: ARCHIVED BOARDS ================= -->
+        <!-- TAB 2: ARCHIVED BOARDS -->
         <div id="tab-archive" class="hidden bg-white rounded-3xl border border-gray-200 shadow-md p-6 space-y-6">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-4">
                 <div>
@@ -262,12 +255,8 @@
                 </div>
             </div>
 
-            <!-- Archive List Grid -->
-            <div id="archive-boards-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Archived boards injected here -->
-            </div>
+            <div id="archive-boards-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </div>
-
     </main>
 
     <!-- Modal 1: Award Sticker Modal -->
@@ -278,19 +267,17 @@
                     <span id="modal-type-icon" class="text-2xl">💖</span>
                     <h3 id="modal-title" class="text-lg font-bold text-gray-800">포도알 스티커 붙이기</h3>
                 </div>
-                <button onclick="closeAwardModal()" class="text-gray-400 hover:text-gray-600 text-lg">
+                <button type="button" onclick="closeAwardModal()" class="text-gray-400 hover:text-gray-600 text-lg">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
             <form id="award-form" onsubmit="handleAwardSubmit(event)" class="space-y-4">
-                <!-- Giver & Recipient Info -->
                 <div class="bg-amber-50 rounded-2xl p-3.5 text-xs text-amber-900 border border-amber-200">
                     <span class="font-semibold" id="modal-giver-name">보내는 사람: 사용자 A</span> ➔ 
                     <span class="font-bold text-amber-950" id="modal-receiver-name">받는 사람: 사용자 B</span>
                 </div>
 
-                <!-- Sticker Amount Selection (0.5 vs 1.0) -->
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1.5">스티커 단위 선택</label>
                     <div class="grid grid-cols-2 gap-3">
@@ -311,19 +298,16 @@
                     </div>
                 </div>
 
-                <!-- Reason Input -->
                 <div>
                     <label class="block text-xs font-bold text-gray-700 mb-1.5">스티커 사유 (이유) <span class="text-rose-500">*</span></label>
                     <textarea id="award-reason" required rows="3" placeholder="칭찬이나 반성 사유를 적어주세요! (예: 맛있는 저녁 만들어줘서 고마워!)"
                               class="w-full border border-gray-300 rounded-xl p-3 text-xs focus:ring-2 focus:ring-amber-400 outline-none resize-none"></textarea>
                 </div>
 
-                <!-- Remaining Daily Limits info -->
                 <div class="text-right text-[11px] text-gray-500 font-medium" id="modal-remaining-quota">
                     오늘 남아있는 선물 한도: 3개
                 </div>
 
-                <!-- Form Action Buttons -->
                 <div class="flex space-x-2 pt-2">
                     <button type="button" onclick="closeAwardModal()" class="w-1/3 py-2.5 border border-gray-300 text-gray-600 font-bold text-xs rounded-xl hover:bg-gray-50">
                         취소
@@ -341,7 +325,7 @@
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 pop-in text-center relative overflow-hidden">
             <div id="detail-accent-bar" class="absolute top-0 left-0 right-0 h-3 bg-pink-400"></div>
 
-            <button onclick="closeDetailModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">
+            <button type="button" onclick="closeDetailModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-lg">
                 <i class="fa-solid fa-xmark"></i>
             </button>
 
@@ -366,7 +350,7 @@
                 <div>붙인 날짜: <span id="detail-date" class="text-gray-500">2026. 11. 10 12:00</span></div>
             </div>
 
-            <button onclick="closeDetailModal()" class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-xs rounded-xl transition-all">
+            <button type="button" onclick="closeDetailModal()" class="w-full py-2.5 bg-gray-800 hover:bg-gray-900 text-white font-bold text-xs rounded-xl transition-all">
                 확인
             </button>
         </div>
@@ -406,12 +390,43 @@
         const STORAGE_KEY = 'grape_sticker_app_data_v2';
         const BOARD_CAPACITY = 15;
 
-        // say_v와 같은 Supabase 프로젝트를 사용하되, 포도알은 별도 테이블에 저장합니다.
         const SUPABASE_URL = 'https://wakgnnsbduzzalgnjyes.supabase.co';
         const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_fx0qp_JNDq52QTpSPdQShA_B28ASNdB';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-        });
+
+        // 브라우저 환경(file:// 등)에 따라 localStorage가 차단될 경우를 대비한 안전 저장소
+        const memoryStorage = {};
+        const safeStorage = {
+            getItem(key) {
+                try { return window.localStorage.getItem(key); }
+                catch (e) { return memoryStorage[key] || null; }
+            },
+            setItem(key, val) {
+                try { window.localStorage.setItem(key, val); }
+                catch (e) { memoryStorage[key] = val; }
+            }
+        };
+
+        // Supabase 클라이언트 안전 초기화 (CDN 로딩 실패 시에도 스크립트가 멈추지 않음)
+        let supabaseClient = null;
+        function getSupabase() {
+            if (supabaseClient) return supabaseClient;
+            if (window.supabase && typeof window.supabase.createClient === 'function') {
+                try {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+                        auth: {
+                            persistSession: true,
+                            autoRefreshToken: true,
+                            detectSessionInUrl: false,
+                            storage: safeStorage
+                        }
+                    });
+                } catch (e) {
+                    console.error('Supabase 초기화 오류:', e);
+                }
+            }
+            return supabaseClient;
+        }
+
         let currentSession = null;
         let currentRoom = null;
         let roomChannel = null;
@@ -426,17 +441,13 @@
                 user1: { name: '사용자 A', avatar: '🌸' },
                 user2: { name: '사용자 B', avatar: '🌿' }
             },
-            currentUserKey: 'user1', // Logged in user
-            viewTargetUserKey: 'user1', // Currently viewed user board
-            activeBoardType: 'good', // 'good' or 'bad' (completely separated)
-
-            // Active boards being filled
+            currentUserKey: 'user1',
+            viewTargetUserKey: 'user1',
+            activeBoardType: 'good',
             activeBoards: {
                 user1: { good: { round: 1, items: [] }, bad: { round: 1, items: [] } },
                 user2: { good: { round: 1, items: [] }, bad: { round: 1, items: [] } }
             },
-
-            // Archived completed 15-grape boards
             archivedBoards: []
         };
 
@@ -446,16 +457,27 @@
         window.addEventListener('DOMContentLoaded', async () => {
             loadStorage();
             renderAll();
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            await handleAuthSession(session);
-            supabaseClient.auth.onAuthStateChange((_event, sessionNow) => {
-                // Supabase auth callback에서 비동기 작업을 직접 기다리지 않도록 microtask로 넘깁니다.
-                Promise.resolve().then(() => handleAuthSession(sessionNow));
-            });
+
+            const sb = getSupabase();
+            if (!sb) {
+                setGateMessage('서버 연결 모듈을 불러오지 못했습니다. 인터넷 연결 상태를 확인하거나 페이지를 새로고침해 주세요.');
+                return;
+            }
+
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                await handleAuthSession(session);
+                sb.auth.onAuthStateChange((_event, sessionNow) => {
+                    Promise.resolve().then(() => handleAuthSession(sessionNow));
+                });
+            } catch (err) {
+                console.error('세션 확인 오류:', err);
+                setGateMessage('로그인 세션을 확인하는 중 문제가 발생했습니다. 다시 로그인해 주세요.');
+            }
         });
 
         function loadStorage() {
-            const saved = localStorage.getItem(STORAGE_KEY);
+            const saved = safeStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try { appData = { ...appData, ...JSON.parse(saved) }; }
                 catch (e) { console.error('Storage load error:', e); }
@@ -463,7 +485,7 @@
         }
 
         function saveStorage() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            safeStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
             if (currentRoom && !cloudApplying) scheduleCloudSave();
         }
 
@@ -481,10 +503,13 @@
 
         function showAuthMode(mode) {
             authMode = mode;
-            document.getElementById('login-tab').className = mode === 'login' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
-            document.getElementById('signup-tab').className = mode === 'signup' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600';
+            const loginTab = document.getElementById('login-tab');
+            const signupTab = document.getElementById('signup-tab');
+            if (loginTab) loginTab.className = mode === 'login' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white cursor-pointer' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600 cursor-pointer';
+            if (signupTab) signupTab.className = mode === 'signup' ? 'flex-1 py-2 rounded-xl text-sm font-bold bg-amber-500 text-white cursor-pointer' : 'flex-1 py-2 rounded-xl text-sm font-bold bg-gray-100 text-gray-600 cursor-pointer';
             setText('auth-submit', mode === 'login' ? '로그인' : '회원가입');
-            document.getElementById('auth-password').autocomplete = mode === 'login' ? 'current-password' : 'new-password';
+            const pwInput = document.getElementById('auth-password');
+            if (pwInput) pwInput.autocomplete = mode === 'login' ? 'current-password' : 'new-password';
             setGateMessage('');
         }
 
@@ -494,17 +519,30 @@
 
         async function submitAuth(event) {
             event.preventDefault();
+            const sb = getSupabase();
+            if (!sb) {
+                return setGateMessage('서버 연결 모듈이 로드되지 않았습니다. 네트워크 확인 후 새로고침해 주세요.');
+            }
+
             const username = document.getElementById('auth-username').value.trim();
             const password = document.getElementById('auth-password').value;
-            if (!/^[a-zA-Z0-9._-]{3,20}$/.test(username)) return setGateMessage('아이디는 영문, 숫자, 점(.), 밑줄(_), 하이픈(-)만 사용해 3~20자로 만들어 주세요.');
-            if (password.length < 6) return setGateMessage('비밀번호는 6자 이상이어야 합니다.');
+            if (!/^[a-zA-Z0-9._-]{3,20}$/.test(username)) {
+                return setGateMessage('아이디는 영문, 숫자, 점(.), 밑줄(_), 하이픈(-)만 사용해 3~20자로 만들어 주세요.');
+            }
+            if (password.length < 6) {
+                return setGateMessage('비밀번호는 6자 이상이어야 합니다.');
+            }
+
             const button = document.getElementById('auth-submit');
-            button.disabled = true; button.textContent = '처리 중...';
+            button.disabled = true;
+            button.textContent = '처리 중...';
+            setGateMessage('');
+
             try {
                 const email = usernameToEmail(username);
                 const result = authMode === 'signup'
-                    ? await supabaseClient.auth.signUp({ email, password, options: { data: { username } } })
-                    : await supabaseClient.auth.signInWithPassword({ email, password });
+                    ? await sb.auth.signUp({ email, password, options: { data: { username } } })
+                    : await sb.auth.signInWithPassword({ email, password });
                 if (result.error) throw result.error;
                 if (authMode === 'signup' && !result.data.session) {
                     setGateMessage('회원가입 요청은 완료됐지만 인증 대기 상태입니다. Supabase 설정에서 이메일 확인(Confirm email)을 꺼야 아이디 방식으로 바로 로그인할 수 있어요.');
@@ -514,15 +552,18 @@
             } catch (error) {
                 setGateMessage(error.message || '로그인에 실패했어요. 아이디와 비밀번호를 확인해 주세요.');
             } finally {
-                button.disabled = false; button.textContent = authMode === 'login' ? '로그인' : '회원가입';
+                button.disabled = false;
+                button.textContent = authMode === 'login' ? '로그인' : '회원가입';
             }
         }
 
         async function handleAuthSession(session) {
+            const sb = getSupabase();
             currentSession = session;
             const gate = document.getElementById('auth-gate');
             if (!session) {
-                cleanupRoomSubscription(); currentRoom = null;
+                cleanupRoomSubscription();
+                currentRoom = null;
                 document.getElementById('auth-panel').classList.remove('hidden');
                 document.getElementById('room-panel').classList.add('hidden');
                 gate.classList.remove('hidden');
@@ -533,7 +574,9 @@
             setText('signed-in-label', session.user.user_metadata?.username || session.user.email?.split('@')[0] || '사용자');
             setGateMessage('연결된 포도판을 확인하고 있어요...', false);
             try {
-                const { data, error } = await supabaseClient.from('grape_rooms').select('*').or(`member1.eq.${session.user.id},member2.eq.${session.user.id}`).order('updated_at', { ascending: false }).limit(1).maybeSingle();
+                const { data, error } = await sb.from('grape_rooms').select('*')
+                    .or(`member1.eq.${session.user.id},member2.eq.${session.user.id}`)
+                    .order('updated_at', { ascending: false }).limit(1).maybeSingle();
                 if (error) throw error;
                 if (data) {
                     await enterGrapeRoom(data);
@@ -544,25 +587,23 @@
                 }
             } catch (error) {
                 gate.classList.remove('hidden');
-                setGateMessage(`포도판을 불러오지 못했어요.
-Supabase SQL 설정과 Realtime 설정을 확인해 주세요.
-${error.message}`);
+                setGateMessage(`포도판을 불러오지 못했어요.\nSupabase SQL 설정과 Realtime 설정을 확인해 주세요.\n${error.message}`);
             }
         }
 
         function makeInviteCode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            const bytes = new Uint8Array(8); crypto.getRandomValues(bytes);
+            const bytes = new Uint8Array(8);
+            crypto.getRandomValues(bytes);
             return Array.from(bytes, b => chars[b % chars.length]).join('');
         }
 
         async function createGrapeRoom() {
-            if (!currentSession) return;
+            const sb = getSupabase();
+            if (!currentSession || !sb) return;
             setGateMessage('공유 포도판을 확인하고 있어요...', false);
             try {
-                // 이전 시도에서 방 생성만 성공하고 화면 표시가 실패했을 수 있으므로,
-                // 새 방을 만들기 전에 현재 계정의 기존 방을 먼저 재사용합니다.
-                const existingResult = await supabaseClient.from('grape_rooms').select('*')
+                const existingResult = await sb.from('grape_rooms').select('*')
                     .or(`member1.eq.${currentSession.user.id},member2.eq.${currentSession.user.id}`)
                     .order('updated_at', { ascending: false }).limit(1).maybeSingle();
                 if (existingResult.error) throw existingResult.error;
@@ -577,7 +618,7 @@ ${error.message}`);
                 let created = null;
                 for (let i = 0; i < 5; i++) {
                     const invite_code = makeInviteCode();
-                    const { data, error } = await supabaseClient.from('grape_rooms').insert({ invite_code, member1: currentSession.user.id, data: initial }).select().single();
+                    const { data, error } = await sb.from('grape_rooms').insert({ invite_code, member1: currentSession.user.id, data: initial }).select().single();
                     if (!error) { created = data; break; }
                     if (error.code !== '23505') throw error;
                 }
@@ -594,25 +635,28 @@ ${error.message}`);
         }
 
         async function joinGrapeRoom() {
-            if (!currentSession) return;
+            const sb = getSupabase();
+            if (!currentSession || !sb) return;
             const code = document.getElementById('join-code').value.trim().toUpperCase();
             if (!/^[A-HJ-NP-Z2-9]{8}$/.test(code)) return setGateMessage('초대 코드 8자리를 정확히 입력해 주세요.');
             setGateMessage('초대 코드 확인 중...', false);
             try {
-                const { data, error } = await supabaseClient.rpc('join_grape_room', { p_invite_code: code });
+                const { data, error } = await sb.rpc('join_grape_room', { p_invite_code: code });
                 if (error) {
-                    console.error('join_grape_room RPC error:', error);
-                    throw new Error(`${error.message}${error.details ? `\n상세: ${error.details}` : ''}${error.hint ? `\n안내: ${error.hint}` : ''}`);
+                    throw new Error(`${error.message}${error.details ? `\n상세: ${error.details}` : ''}`);
                 }
                 const room = Array.isArray(data) ? data[0] : data;
                 if (!room) throw new Error('초대 코드를 찾을 수 없어요.');
                 await enterGrapeRoom(room);
                 document.getElementById('auth-gate').classList.add('hidden');
                 showToast('두 사람의 포도판이 연결됐어요!');
-            } catch (error) { console.error('초대 코드 참여 실패:', error); setGateMessage(`참여 실패: ${error.message || '알 수 없는 오류'}`); }
+            } catch (error) {
+                setGateMessage(`참여 실패: ${error.message || '알 수 없는 오류'}`);
+            }
         }
 
         async function enterGrapeRoom(room) {
+            const sb = getSupabase();
             cleanupRoomSubscription();
             currentRoom = room;
             const isFirst = room.member1 === currentSession.user.id;
@@ -624,32 +668,36 @@ ${error.message}`);
             appData.currentUserKey = localKey;
             appData.viewTargetUserKey = localKey;
             lastCloudUpdatedAt = room.updated_at || null;
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+            safeStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
             setText('current-user-name', appData.users[localKey].name);
             setText('invite-code-btn', `초대 코드 ${room.invite_code}`);
             renderAll();
-            roomChannel = supabaseClient.channel(`grape-room-${room.id}`)
-                .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'grape_rooms', filter: `id=eq.${room.id}` }, payload => {
-                    const updated = payload.new;
-                    if (!updated || updated.updated_at === lastCloudUpdatedAt) return;
-                    if (cloudWriteInProgress) return;
-                    const keepKey = appData.currentUserKey;
-                    const keepType = appData.activeBoardType;
-                    cloudApplying = true;
-                    appData = { ...appData, ...updated.data, currentUserKey: keepKey, viewTargetUserKey: keepKey, activeBoardType: keepType };
-                    lastCloudUpdatedAt = updated.updated_at;
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-                    setText('current-user-name', appData.users[keepKey].name);
-                    renderAll();
-                    cloudApplying = false;
-                })
-                .subscribe(status => {
-                    if (status === 'CHANNEL_ERROR') showToast('실시간 연결에 문제가 있어요. 새로고침해 주세요.');
-                });
+
+            if (sb) {
+                roomChannel = sb.channel(`grape-room-${room.id}`)
+                    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'grape_rooms', filter: `id=eq.${room.id}` }, payload => {
+                        const updated = payload.new;
+                        if (!updated || updated.updated_at === lastCloudUpdatedAt) return;
+                        if (cloudWriteInProgress) return;
+                        const keepKey = appData.currentUserKey;
+                        const keepType = appData.activeBoardType;
+                        cloudApplying = true;
+                        appData = { ...appData, ...updated.data, currentUserKey: keepKey, viewTargetUserKey: keepKey, activeBoardType: keepType };
+                        lastCloudUpdatedAt = updated.updated_at;
+                        safeStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+                        setText('current-user-name', appData.users[keepKey].name);
+                        renderAll();
+                        cloudApplying = false;
+                    })
+                    .subscribe(status => {
+                        if (status === 'CHANNEL_ERROR') showToast('실시간 연결에 문제가 있어요. 새로고침해 주세요.');
+                    });
+            }
         }
 
         function cleanupRoomSubscription() {
-            if (roomChannel) { supabaseClient.removeChannel(roomChannel); roomChannel = null; }
+            const sb = getSupabase();
+            if (roomChannel && sb) { sb.removeChannel(roomChannel); roomChannel = null; }
         }
 
         function scheduleCloudSave() {
@@ -658,11 +706,12 @@ ${error.message}`);
         }
 
         async function pushCloudData() {
-            if (!currentRoom || !currentSession || cloudApplying || cloudWriteInProgress) return;
+            const sb = getSupabase();
+            if (!currentRoom || !currentSession || cloudApplying || cloudWriteInProgress || !sb) return;
             cloudWriteInProgress = true;
             try {
                 const snapshot = { ...appData, currentUserKey: 'user1', viewTargetUserKey: 'user1' };
-                const { data, error } = await supabaseClient.rpc('save_grape_room_data', { p_room_id: currentRoom.id, p_data: snapshot });
+                const { data, error } = await sb.rpc('save_grape_room_data', { p_room_id: currentRoom.id, p_data: snapshot });
                 if (error) throw error;
                 lastCloudUpdatedAt = data || new Date().toISOString();
             } catch (error) {
@@ -677,35 +726,19 @@ ${error.message}`);
         }
 
         async function signOutGrape() {
+            const sb = getSupabase();
             clearTimeout(cloudSaveTimer);
             await pushCloudData();
-            cleanupRoomSubscription(); currentRoom = null;
-            await supabaseClient.auth.signOut();
+            cleanupRoomSubscription();
+            currentRoom = null;
+            if (sb) await sb.auth.signOut();
             document.getElementById('auth-gate').classList.remove('hidden');
             showToast('로그아웃했어요.');
         }
 
-        function getCurrentUser() {
-            return appData.users[appData.currentUserKey];
-        }
-
-        function getPartnerKey(userKey = appData.currentUserKey) {
-            return userKey === 'user1' ? 'user2' : 'user1';
-        }
-
-        function getPartnerUser() {
-            return appData.users[getPartnerKey()];
-        }
-
-        function toggleCurrentUser() {
-            // 실제 접속자는 로그인한 계정과 초대방 멤버 순서로 결정됩니다.
-            showToast('접속자 변경은 로그아웃 후 다른 아이디로 로그인해 주세요.');
-        }
-
-        function setViewTargetUser(userKey) {
-            appData.viewTargetUserKey = userKey;
-            renderAll();
-        }
+        function getCurrentUser() { return appData.users[appData.currentUserKey]; }
+        function getPartnerKey(userKey = appData.currentUserKey) { return userKey === 'user1' ? 'user2' : 'user1'; }
+        function getPartnerUser() { return appData.users[getPartnerKey()]; }
 
         function switchBoardType(type) {
             appData.activeBoardType = type;
@@ -713,9 +746,7 @@ ${error.message}`);
             renderAll();
         }
 
-        function openAwardModalCurrent() {
-            openAwardModal(appData.activeBoardType);
-        }
+        function openAwardModalCurrent() { openAwardModal(appData.activeBoardType); }
 
         function getTodayString() {
             const d = new Date();
@@ -725,14 +756,10 @@ ${error.message}`);
         function getTodayUsedCount(giverKey, receiverKey, type) {
             const today = getTodayString();
             let count = 0;
-
             const board = appData.activeBoards[receiverKey][type];
             board.items.forEach(item => {
-                if (item.giverKey === giverKey && item.dateStr === today) {
-                    count += item.amount;
-                }
+                if (item.giverKey === giverKey && item.dateStr === today) count += item.amount;
             });
-
             return count;
         }
 
@@ -746,21 +773,15 @@ ${error.message}`);
             const currUser = getCurrentUser();
             const partnerUser = getPartnerUser();
 
-            // Header Button
             setText('current-user-name', currUser.name);
-
-            // Names Ribbon
             setText('giver-name-lbl', currUser.name);
             setText('receiver-name-lbl', partnerUser.name);
-
-            // Cards Names
             setText('name-display-user1', appData.users.user1.name);
             setText('name-display-user2', appData.users.user2.name);
 
             setText('board-round-user1', `진행중: 좋아요 Vol.${appData.activeBoards.user1.good.round} / 나빠요 Vol.${appData.activeBoards.user1.bad.round}`);
             setText('board-round-user2', `진행중: 좋아요 Vol.${appData.activeBoards.user2.good.round} / 나빠요 Vol.${appData.activeBoards.user2.bad.round}`);
 
-            // Card Highlight
             const c1 = document.getElementById('card-user1');
             const c2 = document.getElementById('card-user2');
             if (appData.currentUserKey === 'user1') {
@@ -771,24 +792,6 @@ ${error.message}`);
                 c1.classList.remove('ring-4', 'ring-amber-300/60');
             }
 
-            // Target selector buttons
-            const btn1 = document.getElementById('view-user1-btn');
-            const btn2 = document.getElementById('view-user2-btn');
-            // 구버전 화면에는 개별 판 선택 버튼이 없으므로, 버튼이 있을 때만 갱신합니다.
-            if (btn1 && btn2) {
-                setText('view-user1-btn', `${appData.users.user1.name}의 판`);
-                setText('view-user2-btn', `${appData.users.user2.name}의 판`);
-
-                if (appData.viewTargetUserKey === 'user1') {
-                    btn1.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
-                    btn2.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
-                } else {
-                    btn2.className = 'px-3 py-1 rounded-lg bg-amber-500 text-white font-bold shadow-sm';
-                    btn1.className = 'px-3 py-1 rounded-lg text-gray-600 hover:text-gray-900';
-                }
-            }
-
-            // Board type tab highlights
             const tabGood = document.getElementById('tab-good-btn');
             const tabBad = document.getElementById('tab-bad-btn');
             if (appData.activeBoardType === 'good') {
@@ -803,10 +806,8 @@ ${error.message}`);
         function renderQuotaBanner() {
             const giverKey = appData.currentUserKey;
             const receiverKey = getPartnerKey();
-
             const usedGood = getTodayUsedCount(giverKey, receiverKey, 'good');
             const usedBad = getTodayUsedCount(giverKey, receiverKey, 'bad');
-
             const remGood = Math.max(0, 3 - usedGood);
             const remBad = Math.max(0, 3 - usedBad);
 
@@ -814,7 +815,6 @@ ${error.message}`);
                 `오늘 상대방에게 선물 가능: <span class="text-pink-600 font-bold">좋아요 ${remGood}개</span> / <span class="text-indigo-600 font-bold">나빠요 ${remBad}개</span> 남음`;
         }
 
-        // Render both users' boards for the currently selected type.
         function renderGrapeBoards() {
             const type = appData.activeBoardType;
             const isGood = type === 'good';
@@ -822,11 +822,7 @@ ${error.message}`);
             const partnerUser = getPartnerUser();
 
             const ribbon = document.getElementById('action-ribbon');
-            const ribbonIcon = document.getElementById('ribbon-icon');
-            const ribbonTitle = document.getElementById('ribbon-title');
             const awardBtn = document.getElementById('award-btn');
-            const awardIcon = document.getElementById('award-btn-icon');
-            const awardLabel = document.getElementById('award-btn-label');
 
             setText('giver-name-lbl', currUser.name);
             setText('receiver-name-lbl', partnerUser.name);
@@ -853,7 +849,6 @@ ${error.message}`);
                 const total = Number(getBoardSum(board.items));
                 const card = document.getElementById(`board-card-${userKey}`);
                 const header = document.getElementById(`board-header-${userKey}`);
-                const heading = document.getElementById(`board-heading-${userKey}`);
                 const round = document.getElementById(`board-round-${userKey}-main`);
                 const progress = document.getElementById(`board-progress-${userKey}`);
 
@@ -884,14 +879,12 @@ ${error.message}`);
         function buildGrapePyramid(containerId, items, type) {
             const container = document.getElementById(containerId);
             container.innerHTML = '';
-
             const rowCounts = [5, 4, 3, 2, 1];
             let itemIndex = 0;
 
             rowCounts.forEach(count => {
                 const rowDiv = document.createElement('div');
                 rowDiv.className = 'flex justify-center space-x-2 sm:space-x-3';
-
                 for (let i = 0; i < count; i++) {
                     const sticker = items[itemIndex];
                     const cellBtn = createGrapeElement(sticker, type, itemIndex + 1);
@@ -930,14 +923,11 @@ ${error.message}`);
                         btn.innerHTML = `<span>💔</span>`;
                     }
                 }
-
                 btn.onclick = () => openDetailModal(sticker, type);
             }
-
             return btn;
         }
 
-        // Tab Switch
         function switchTab(tabName) {
             const boardBtnGood = document.getElementById('tab-good-btn');
             const boardBtnBad = document.getElementById('tab-bad-btn');
@@ -952,16 +942,13 @@ ${error.message}`);
             } else {
                 boardSec.classList.add('hidden');
                 archiveSec.classList.remove('hidden');
-
                 archiveBtn.className = "px-4 py-2.5 font-bold text-xs sm:text-sm rounded-t-xl border-b-2 border-amber-500 text-amber-600 bg-white shadow-sm flex items-center space-x-1.5 ml-auto transition-all";
                 boardBtnGood.className = "px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-pink-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5";
                 boardBtnBad.className = "px-4 py-2.5 font-bold text-xs sm:text-sm text-gray-500 hover:text-indigo-600 rounded-t-xl border-b-2 border-transparent hover:bg-white/50 transition-all flex items-center space-x-1.5";
-
                 renderArchive();
             }
         }
 
-        // Render Archive Tab with Type Filtering
         function renderArchive() {
             const container = document.getElementById('archive-boards-container');
             const userFilter = document.getElementById('archive-user-filter').value;
@@ -969,10 +956,7 @@ ${error.message}`);
             container.innerHTML = '';
 
             let list = appData.archivedBoards.filter(b => b.receiverKey === userFilter);
-
-            if (typeFilter !== 'all') {
-                list = list.filter(b => b.type === typeFilter);
-            }
+            if (typeFilter !== 'all') list = list.filter(b => b.type === typeFilter);
 
             if (list.length === 0) {
                 container.innerHTML = `
@@ -986,10 +970,8 @@ ${error.message}`);
 
             list.forEach(archive => {
                 const isGood = archive.type === 'good';
-
                 const boardCard = document.createElement('div');
                 boardCard.className = `bg-white rounded-3xl p-5 border-2 ${isGood ? 'border-pink-200 bg-pink-50/10' : 'border-indigo-200 bg-indigo-50/10'} shadow-sm space-y-3`;
-
                 boardCard.innerHTML = `
                     <div class="flex justify-between items-center border-b border-gray-100 pb-2">
                         <div>
@@ -1002,16 +984,13 @@ ${error.message}`);
                             15 / 15 완공 🎉
                         </span>
                     </div>
-                    <div id="archived-pyramid-${archive.id}" class="flex flex-col items-center justify-center py-2">
-                    </div>
+                    <div id="archived-pyramid-${archive.id}" class="flex flex-col items-center justify-center py-2"></div>
                 `;
-
                 container.appendChild(boardCard);
                 buildGrapePyramid(`archived-pyramid-${archive.id}`, archive.items, archive.type);
             });
         }
 
-        // Award / detail / name-edit interactions
         function openAwardModal(type) {
             currentAwardType = type;
             const giverKey = appData.currentUserKey;
@@ -1024,10 +1003,11 @@ ${error.message}`);
             document.getElementById('award-reason').value = '';
             document.querySelector('input[name="sticker-amount"][value="0.5"]').checked = true;
             const used = getTodayUsedCount(giverKey, receiverKey, type);
-            setText('modal-remaining-quota', `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3-used)}개`);
+            setText('modal-remaining-quota', `오늘 남아있는 ${isGood ? '좋아요' : '나빠요'} 한도: ${Math.max(0, 3 - used)}개`);
             document.getElementById('modal-award').classList.remove('hidden');
         }
         function closeAwardModal() { document.getElementById('modal-award').classList.add('hidden'); }
+
         function handleAwardSubmit(event) {
             event.preventDefault();
             const giverKey = appData.currentUserKey;
@@ -1039,14 +1019,17 @@ ${error.message}`);
             const remaining = Math.max(0, 3 - used);
             const board = appData.activeBoards[receiverKey][type];
             const filled = Number(getBoardSum(board.items));
+
             if (!reason) return showToast('스티커 사유를 입력해주세요.');
             if (amount > remaining) return showToast('오늘 사용할 수 있는 스티커 한도를 초과했어요.');
             if (filled + amount > BOARD_CAPACITY) return showToast('현재 포도판에 남은 공간보다 큰 수량이에요.');
+
             board.items.push({
                 id: Date.now() + Math.random(), amount, reason, type,
                 giverKey, receiverKey, dateStr: getTodayString(),
                 createdAt: new Date().toISOString()
             });
+
             if (Number(getBoardSum(board.items)) === BOARD_CAPACITY) {
                 appData.archivedBoards.push({
                     id: Date.now(), receiverKey, type, round: board.round,
@@ -1063,9 +1046,10 @@ ${error.message}`);
             closeAwardModal();
             renderAll();
         }
+
         function openDetailModal(sticker, boardType = currentDetailType) {
             const good = boardType === 'good';
-            setText('detail-icon', good ? (sticker.amount === 0.5 ? '💧' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔'));
+            setText('detail-icon', good ? (sticker.amount === 0.5 ? '🌓' : '💖') : (sticker.amount === 0.5 ? '💧' : '💔'));
             setText('detail-type-badge', `${good ? '좋아요' : '나빠요'} 포도알 +${Number(sticker.amount).toFixed(1)}`);
             document.getElementById('detail-accent-bar').className = `absolute top-0 left-0 right-0 h-3 ${good ? 'bg-pink-400' : 'bg-indigo-500'}`;
             setText('detail-reason', sticker.reason || '');
@@ -1075,6 +1059,7 @@ ${error.message}`);
             document.getElementById('modal-detail').classList.remove('hidden');
         }
         function closeDetailModal() { document.getElementById('modal-detail').classList.add('hidden'); }
+
         function openEditNameModal(userKey) {
             if (userKey !== appData.currentUserKey) return showToast('본인 이름만 수정할 수 있어요.');
             document.getElementById('edit-user-key').value = userKey;
@@ -1082,6 +1067,7 @@ ${error.message}`);
             document.getElementById('modal-edit-name').classList.remove('hidden');
         }
         function closeEditNameModal() { document.getElementById('modal-edit-name').classList.add('hidden'); }
+
         function handleSaveName(event) {
             event.preventDefault();
             const key = document.getElementById('edit-user-key').value;
@@ -1095,43 +1081,29 @@ ${error.message}`);
             showToast('이름을 수정했어요.');
         }
 
-        // Confetti Fireworks Effect
         function triggerConfetti() {
             if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 }
-                });
+                confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             }
         }
 
-        // Utility: Show Toast Notification
         function showToast(message) {
             const toast = document.getElementById('toast-msg');
             const text = document.getElementById('toast-text');
-            if (!toast || !text) { console.warn('알림 표시 요소를 찾지 못했습니다:', message); return; }
+            if (!toast || !text) return;
             text.textContent = message;
-
             toast.classList.remove('opacity-0', 'pointer-events-none');
             toast.classList.add('opacity-100');
-
             setTimeout(() => {
                 toast.classList.remove('opacity-100');
                 toast.classList.add('opacity-0', 'pointer-events-none');
             }, 3000);
         }
 
-        // Utility: Format Date
         function formatDate(isoStr) {
             if (!isoStr) return '';
             const d = new Date(isoStr);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const date = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const mins = String(d.getMinutes()).padStart(2, '0');
-            return `${year}.${month}.${date} ${hours}:${mins}`;
+            return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
         }
     </script>
 </body>
