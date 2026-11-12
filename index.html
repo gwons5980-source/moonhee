@@ -121,8 +121,8 @@
     <h1>🍇 문희사항 🍇</h1>
     <div class="top-btns">
       <button class="top-btn" onclick="openInboxModal()">📬 요청함 <span class="badge-dot" id="reqBadge" style="display:none;">0</span></button>
-      <button class="top-btn" onclick="openTermsModal()">📋 이용약관</button>
-      <button class="top-btn" onclick="openArchiveModal()">📜 보관함</button>
+      <button class="top-btn" onclick="openTermsModal()">📋 이용 약관</button>
+      <button class="top-btn" onclick="openArchiveModal()">📜 포도판 보관함</button>
     </div>
   </header>
 
@@ -133,7 +133,7 @@
 <div class="modal-overlay" id="termsModal">
   <div class="modal">
     <div class="modal-header-flex">
-      <h3>📋 우리 둘만의 이용 약관</h3>
+      <h3>📋 이용 약관</h3>
       <button class="small-edit-btn" id="termsEditBtn" onclick="toggleTermsEdit()">수정</button>
     </div>
     <div id="termsBody"></div>
@@ -184,7 +184,7 @@
 <!-- 보관함 모달 -->
 <div class="modal-overlay" id="archiveModal">
   <div class="modal">
-    <h3>📜 완성된 포도판 보관함</h3>
+    <h3>📜 포도판 보관함</h3>
     <div class="modal-options" style="margin: 10px 0;">
       <button id="filter-user1" class="selected" onclick="filterArchive('user1')">사용자 1</button>
       <button id="filter-user2" onclick="filterArchive('user2')">사용자 2</button>
@@ -192,6 +192,18 @@
     <div id="archiveList" style="max-height: 300px; overflow-y: auto;"></div>
     <div class="modal-btns" style="margin-top: 12px;">
       <button class="cancel" onclick="closeArchiveModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 보관된 판 수정용 모달 -->
+<div class="modal-overlay" id="archiveEditModal">
+  <div class="modal">
+    <h3>✏️ 완성된 포도판 수정</h3>
+    <div id="archiveEditItemsList" style="max-height: 220px; overflow-y: auto; margin-bottom: 12px;"></div>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeArchiveEditModal()">취소</button>
+      <button class="save" onclick="saveArchiveEdit()">저장하기</button>
     </div>
   </div>
 </div>
@@ -231,6 +243,7 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
+  let editingArchiveTarget = null; // { userId, archiveIndex }
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -332,12 +345,15 @@
     const isFolded = foldedState[userId];
     const userName = (appState.users && appState.users[userId] && appState.users[userId].name) ? appState.users[userId].name : (userId === 'user1' ? '사용자 1' : '사용자 2');
     const isOtherCard = (userId !== currentUserId);
+    const tab = appState.users[userId].activeTab;
     
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>`;
     if (isOtherCard) {
+      // 나빠요 탭일 때는 찌르기(👉) 버튼 숨기기
+      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
-          <button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>
+          ${pokeBtnHtml}
           <button class="sticker-btn" onclick="openStickerModal('${userId}')">스티커</button>
           <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>
         </div>
@@ -464,7 +480,7 @@
       }
     } else {
       if (canEdit) {
-        displaySpan.innerHTML = `<span style="color:#aaa; cursor:pointer; font-weight:normal;" onclick="editMemo('${userId}', '${tab}')">${tab === 'like' ? '내가 바라는 것은?' : '상대가 바라는 것은?'}</span>`;
+        displaySpan.innerHTML = `<span style="color:#aaa; cursor:pointer; font-weight:normal;" onclick="editMemo('${userId}', '${tab}')">${tab === 'like' ? '내가 바라는 것은자인가요?' : '상대가 바라는 것은?'}</span>`;
       } else {
         displaySpan.innerHTML = `<span style="color:#aaa; font-weight:normal;">등록된 내용이 없습니다.</span>`;
       }
@@ -506,21 +522,22 @@
 
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
 
-    selectedVal = maxAllowed < 1 ? maxAllowed : 1;
+    selectedVal = 1; // 기본값 1개 고정
 
     document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 💔';
     document.getElementById('stickerReason').value = '';
 
     const btn05 = document.getElementById('val-05');
     const btn1 = document.getElementById('val-1');
+    btn1.className = 'selected';
+    btn05.className = '';
+
     if (maxAllowed < 1) {
       btn1.style.display = 'none';
       btn05.className = 'selected';
       selectedVal = 0.5;
     } else {
       btn1.style.display = 'block';
-      btn1.className = 'selected';
-      selectedVal = 1;
     }
 
     document.getElementById('addModal').classList.add('active');
@@ -533,6 +550,7 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
+  // 💡 14.5개일 때 1개 주면 초과분이 다음 판으로 이월되는 로직 반영
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
@@ -542,7 +560,7 @@
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
 
-    if (selectedVal > maxAllowed) {
+    if (selectedVal > maxAllowed + 0.001) {
       alert(`남은 칸이 ${maxAllowed}개이므로 해당 개수만큼만 부여할 수 있습니다!`);
       return;
     }
@@ -550,17 +568,29 @@
     const today = new Date().toISOString().split('T')[0];
 
     if (tab === 'like') {
-      board.stickers.push({ value: selectedVal, reason: reason, date: today, from: currentUserId });
+      let firstPart = maxAllowed >= selectedVal ? selectedVal : maxAllowed;
+      let secondPart = selectedVal - firstPart; // 초과분
 
+      board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId });
+
+      // 현재 판이 완성되었다면 보관함으로 이관 후 새 판 시작
       if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
-        alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
         appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
-        board.currentVol += 1; board.stickers = []; board.memo = '';
+        board.currentVol += 1; 
+        board.stickers = []; 
+        board.memo = '';
+
+        // 초과분이 있다면 다음 판(새 Vol)에 바로 추가!
+        if (secondPart > 0) {
+          board.stickers.push({ value: secondPart, reason: `${reason} (이월)`, date: today, from: currentUserId });
+        }
+        alert('🎉 포도판 완성으로 보관함에 이관되었고, 초과된 스티커는 다음 판에 이월되었습니다!');
+      } else {
+        alert('좋아요 스티커가 정상적으로 부여되었습니다!');
       }
 
       await saveCloudData();
       renderAll();
-      alert('좋아요 스티커가 정상적으로 부여되었습니다!');
     } else {
       if (!appState.requests) appState.requests = [];
       appState.requests.push({
@@ -669,17 +699,21 @@
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
 
-    if (req.value > maxAllowed) {
-      alert(`남은 칸이 ${maxAllowed}개뿐이어서 이 요청을 승낙할 수 없습니다! (초과됨)`);
-      return;
-    }
+    let firstPart = maxAllowed >= req.value ? req.value : maxAllowed;
+    let secondPart = req.value - firstPart;
 
-    board.stickers.push({ value: req.value, reason: req.reason, date: req.date, from: req.from });
+    board.stickers.push({ value: firstPart, reason: req.reason, date: req.date, from: req.from });
 
     if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
       alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
       appState.boards[currentUserId].archive.push({ vol: board.currentVol, type: req.type, stickers: [...board.stickers], memo: board.memo, completedDate: req.date });
-      board.currentVol += 1; board.stickers = []; board.memo = '';
+      board.currentVol += 1; 
+      board.stickers = []; 
+      board.memo = '';
+
+      if (secondPart > 0) {
+        board.stickers.push({ value: secondPart, reason: `${req.reason} (이월)`, date: req.date, from: req.from });
+      }
     }
 
     req.status = 'accepted';
@@ -748,7 +782,6 @@
   }
   function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
-  // 💡 보관함 아코디언 기능 (기본 접힘 상태)
   function filterArchive(userId) {
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
     document.getElementById('filter-user1').className = userId === currentUserId ? 'selected' : '';
@@ -760,12 +793,18 @@
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
+      // 가장 최근(마지막) 판인지 확인 (직전 판 삭제 허용용)
+      const isLatest = (index === archive.length - 1);
       const card = document.createElement('div');
       card.className = 'archive-card';
       card.innerHTML = `
-        <div class="archive-card-header" onclick="toggleArchiveBody(${index})">
-          <span>${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
-          <span id="archive-toggle-text-${index}" style="font-size:0.75rem; color:#ff8da1; font-weight:600;">펼치기 ▼</span>
+        <div class="archive-card-header">
+          <span onclick="toggleArchiveBody(${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="수정">✏️</button>
+            ${isLatest ? `<button class="memo-del-btn" style="padding:3px 8px; font-size:0.7rem;" onclick="restoreLatestArchive('${userId}')">판 복구하기</button>` : ''}
+            <span onclick="toggleArchiveBody(${index})" style="font-size:0.75rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${index}">펼치기 ▼</span>
+          </div>
         </div>
         <div class="archive-body" id="archive-body-${index}">
           <ul style="padding-left:16px; margin-top:4px;">` + 
@@ -786,6 +825,69 @@
       body.classList.add('open');
       toggleText.innerText = '접기 ▲';
     }
+  }
+
+  // 💡 직전 판 복구(삭제하여 현재 판으로 되돌리기) 기능
+  async function restoreLatestArchive(userId) {
+    const archive = appState.boards[userId].archive;
+    if (archive.length === 0) return;
+
+    if (!confirm('가장 최근에 완성된 이 포도판을 보관함에서 지우고, 다시 진행 중인 판으로 불러오시겠습니까? (현재 진행 중이던 판의 스티커와 합쳐집니다)')) return;
+
+    const latest = archive.pop(); // 보관함에서 마지막 항목 제거
+    const activeTab = latest.type;
+    const activeBoard = appState.boards[userId][activeTab];
+
+    // 기존 진행 중이던 스티커와 합치기
+    activeBoard.stickers = [...latest.stickers, ...activeBoard.stickers];
+    activeBoard.currentVol = latest.vol; // 볼륨 번호 복원
+
+    await saveCloudData();
+    renderAll();
+    closeArchiveModal();
+    alert('포도판이 성공적으로 복구되었습니다!');
+  }
+
+  // 💡 보관된 판 스티커 수정 기능 (전전전~ 언제든 수정 가능)
+  function openArchiveEdit(userId, index) {
+    editingArchiveTarget = { userId, index };
+    const item = appState.boards[userId].archive[index];
+    const listDiv = document.getElementById('archiveEditItemsList');
+
+    listDiv.innerHTML = '';
+    item.stickers.forEach((s, sIdx) => {
+      listDiv.innerHTML += `
+        <div style="background:#fff9fb; padding:8px; border-radius:10px; margin-bottom:8px; border:1px solid #ffe4e1;">
+          <div style="font-size:0.75rem; color:#888; margin-bottom:2px;">날짜: ${s.date}</div>
+          <input type="text" id="edit-reason-${sIdx}" value="${s.reason}" style="width:100%; padding:6px; font-size:0.8rem; border:1px solid #ccc; border-radius:6px; margin-bottom:4px;" placeholder="사유">
+          <input type="number" step="0.5" id="edit-val-${sIdx}" value="${s.value}" style="width:100%; padding:6px; font-size:0.8rem; border:1px solid #ccc; border-radius:6px;" placeholder="개수 (0.5 또는 1)">
+        </div>
+      `;
+    });
+
+    document.getElementById('archiveEditModal').classList.add('active');
+  }
+
+  function closeArchiveEditModal() {
+    document.getElementById('archiveEditModal').classList.remove('archiveModal') || document.getElementById('archiveEditModal').classList.remove('active');
+  }
+
+  async function saveArchiveEdit() {
+    if (!editingArchiveTarget) return;
+    const { userId, index } = editingArchiveTarget;
+    const item = appState.boards[userId].archive[index];
+
+    item.stickers.forEach((s, sIdx) => {
+      const newReason = document.getElementById(`edit-reason-${sIdx}`).value.trim();
+      const newVal = parseFloat(document.getElementById(`edit-val-${sIdx}`).value);
+      if (newReason) s.reason = newReason;
+      if (!isNaN(newVal) && newVal > 0) s.value = newVal;
+    });
+
+    await saveCloudData();
+    closeArchiveEditModal();
+    openArchiveModal(); // 보관함 창 새로고침
+    alert('수정되었습니다!');
   }
 </script>
 </body>
