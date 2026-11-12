@@ -23,13 +23,13 @@
     body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; }
     .container { max-width: 900px; margin: 0 auto; }
     
-    /* 헤더 한 줄 고정 및 줄바꿈 방지 */
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding: 0 4px; gap: 8px; }
     header h1 { font-size: 1.35rem; color: #ff6b81; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
-    .top-btns { display: flex; gap: 6px; flex-shrink: 0; }
-    .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); white-space: nowrap; }
+    .top-btns { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); white-space: nowrap; position: relative; }
     
-    /* 로그인 오버레이 화면 */
+    .badge-dot { position: absolute; top: -3px; right: -3px; background: #ff6b81; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+
     .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,249,251,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .auth-card { background: white; padding: 30px 24px; border-radius: 28px; width: 100%; max-width: 380px; box-shadow: 0 15px 35px rgba(255,182,193,0.2); border: 1px solid var(--border-color); text-align: center; }
     .auth-card h2 { color: #ff6b81; font-size: 1.4rem; margin-bottom: 8px; }
@@ -45,8 +45,11 @@
     .user-name { font-size: 1.15rem; font-weight: 700; color: #333; cursor: pointer; }
     .user-name.editable:hover { color: #ff6b81; text-decoration: underline; text-underline-offset: 4px; }
     
-    /* 접기/펼치기 버튼 및 영역 */
+    .header-action-btns { display: flex; gap: 6px; align-items: center; }
     .fold-btn { background: var(--pink-soft); border: none; padding: 5px 11px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: var(--pink-dark); cursor: pointer; white-space: nowrap; }
+    .sticker-btn { background: var(--pink-main); color: white; border: none; padding: 5px 11px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+    .poke-btn { background: #fff0f5; border: 1px solid var(--pink-main); padding: 5px 9px; border-radius: 12px; font-size: 0.78rem; cursor: pointer; }
+
     .card-body-content { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--pink-soft); }
     .card-body-content.folded { display: none; }
 
@@ -59,7 +62,7 @@
     .grape-container { background: var(--pink-soft); border-radius: 20px; padding: 22px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .grape-container.bad-mode { background: var(--bad-soft); }
     .grape-row { display: flex; gap: 8px; }
-    .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; cursor: pointer; position: relative; overflow: hidden; }
+    .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; position: relative; overflow: hidden; }
     .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
     .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
@@ -89,13 +92,19 @@
     .modal-btns .cancel { background: #f0f0f0; color: #666; }
     .modal-btns .save { background: var(--pink-main); color: white; }
     .modal-btns .delete-btn { background: #ff6b81; color: white; }
-    .archive-card { background: var(--pink-soft); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-    .archive-card-header { font-weight: 700; margin-bottom: 6px; color: #4a4a4a; display: flex; justify-content: space-between; font-size: 0.8rem; }
+    
+    .request-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .request-card.bad { background: var(--bad-soft); border-color: var(--bad-border); }
+    
+    /* 보관함 카드 아코디언 스타일 */
+    .archive-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .archive-card-header { font-weight: 700; color: #4a4a4a; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; cursor: pointer; }
+    .archive-body { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ffd1dc; display: none; }
+    .archive-body.open { display: block; }
   </style>
 </head>
 <body>
 
-<!-- 로그인 화면 -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-card">
     <h2 id="authTitle">🍇 문희사항 로그인 🍇</h2>
@@ -111,6 +120,7 @@
   <header>
     <h1>🍇 문희사항 🍇</h1>
     <div class="top-btns">
+      <button class="top-btn" onclick="openInboxModal()">📬 요청함 <span class="badge-dot" id="reqBadge" style="display:none;">0</span></button>
       <button class="top-btn" onclick="openTermsModal()">📋 이용약관</button>
       <button class="top-btn" onclick="openArchiveModal()">📜 보관함</button>
     </div>
@@ -133,18 +143,29 @@
   </div>
 </div>
 
-<!-- 스티커 선물 모달 -->
+<!-- 스티커 주기/요청 모달 -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
-    <h3 id="modalTitle">스티커 선물하기</h3>
+    <h3 id="modalTitle">스티커</h3>
     <div class="modal-options">
       <button class="selected" id="val-1" onclick="selectValue(1)">1개</button>
       <button id="val-05" onclick="selectValue(0.5)">0.5개</button>
     </div>
-    <textarea id="stickerReason" placeholder="스티커를 주는 이유를 적어주세요!"></textarea>
+    <textarea id="stickerReason" placeholder="사유를 적어주세요!"></textarea>
     <div class="modal-btns">
       <button class="cancel" onclick="closeAddModal()">취소</button>
-      <button class="save" onclick="submitSticker()">스티커 붙이기</button>
+      <button class="save" id="modalSubmitBtn" onclick="submitStickerModal()">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 받은 요청함 모달 -->
+<div class="modal-overlay" id="inboxModal">
+  <div class="modal">
+    <h3>📥 받은 스티커 요청함</h3>
+    <div id="inboxList" style="margin: 12px 0; max-height: 250px; overflow-y: auto;"></div>
+    <div class="modal-btns">
+      <button class="cancel" onclick="closeInboxModal()">닫기</button>
     </div>
   </div>
 </div>
@@ -168,7 +189,7 @@
       <button id="filter-user1" class="selected" onclick="filterArchive('user1')">사용자 1</button>
       <button id="filter-user2" onclick="filterArchive('user2')">사용자 2</button>
     </div>
-    <div id="archiveList"></div>
+    <div id="archiveList" style="max-height: 300px; overflow-y: auto;"></div>
     <div class="modal-btns" style="margin-top: 12px;">
       <button class="cancel" onclick="closeArchiveModal()">닫기</button>
     </div>
@@ -205,7 +226,8 @@
     boards: {
       user1: { like: { currentVol: 1, stickers: [], memo: '' }, bad: { currentVol: 1, stickers: [], memo: '' }, archive: [] },
       user2: { like: { currentVol: 1, stickers: [], memo: '' }, bad: { currentVol: 1, stickers: [], memo: '' }, archive: [] }
-    }
+    },
+    requests: []
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
@@ -252,9 +274,11 @@
     if (data && data.length > 0) {
       const savedState = data.find(row => row.id === 'main_state');
       if (savedState && savedState.data) {
-        appState = savedState.data;
+        appState = { ...appState, ...savedState.data };
       }
     }
+
+    if (!appState.requests) appState.requests = [];
 
     if (appState.users.user1.ownerEmail === email) currentUserId = 'user1';
     else if (appState.users.user2.ownerEmail === email) currentUserId = 'user2';
@@ -265,7 +289,6 @@
       await saveCloudData();
     }
 
-    // 접속 시 기본 화면은 각자 '좋아요' 판이 열리도록 설정
     appState.users.user1.activeTab = 'like';
     appState.users.user2.activeTab = 'like';
 
@@ -284,7 +307,6 @@
     const container = document.getElementById('dualBoardContainer');
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
 
-    // 로그인한 본인의 카드가 항상 첫 번째(모바일 상단 / PC 왼쪽)에 배치
     container.innerHTML = `
       ${createCardHtml(currentUserId)}
       ${createCardHtml(otherUserId)}
@@ -292,15 +314,41 @@
 
     renderBoardContent(currentUserId);
     renderBoardContent(otherUserId);
+    updateRequestBadge();
+  }
+
+  function updateRequestBadge() {
+    const badge = document.getElementById('reqBadge');
+    const pending = (appState.requests || []).filter(r => r.to === currentUserId && r.status === 'pending');
+    if (pending.length > 0) {
+      badge.style.display = 'flex';
+      badge.innerText = pending.length;
+    } else {
+      badge.style.display = 'none';
+    }
   }
 
   function createCardHtml(userId) {
     const isFolded = foldedState[userId];
+    const userName = (appState.users && appState.users[userId] && appState.users[userId].name) ? appState.users[userId].name : (userId === 'user1' ? '사용자 1' : '사용자 2');
+    const isOtherCard = (userId !== currentUserId);
+    
+    let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>`;
+    if (isOtherCard) {
+      actionButtonsHtml = `
+        <div class="header-action-btns">
+          <button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>
+          <button class="sticker-btn" onclick="openStickerModal('${userId}')">스티커</button>
+          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>
+        </div>
+      `;
+    }
+
     return `
       <div class="user-card" id="card-${userId}">
         <div class="user-card-header">
-          <span class="user-name ${userId === currentUserId ? 'editable' : ''}" id="name-${userId}" onclick="editUserName('${userId}')"></span>
-          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>
+          <span class="user-name ${userId === currentUserId ? 'editable' : ''}" id="name-${userId}" onclick="editUserName('${userId}')">${userName}</span>
+          ${actionButtonsHtml}
         </div>
         <div class="card-body-content ${isFolded ? 'folded' : ''}" id="body-${userId}">
           <div class="board-toggle" id="toggle-${userId}">
@@ -324,7 +372,7 @@
   }
 
   async function editUserName(userId) {
-    if (currentUserId !== userId) return; // 상대방 이름은 클릭해도 무반응
+    if (currentUserId !== userId) return;
     const currentName = appState.users[userId].name;
     const newName = prompt('사용하실 이름을 입력해주세요:', currentName);
     if (newName && newName.trim() !== '') {
@@ -342,8 +390,7 @@
     const memoSection = document.getElementById(`memoSection-${userId}`);
     const nameSpan = document.getElementById(`name-${userId}`);
     
-    // 연필 아이콘 없이 깔끔하게 이름만 표시
-    if (nameSpan) {
+    if (nameSpan && appState.users[userId]) {
       nameSpan.innerText = appState.users[userId].name;
     }
 
@@ -389,7 +436,7 @@
           grape.onclick = () => showStickerDetail(userId, itemData, tab);
         } else {
           grape.innerText = grapeIndex + 1;
-          grape.onclick = () => handleGrapeClick(userId, grapeIndex);
+          grape.onclick = null;
         }
         rowDiv.appendChild(grape);
         stickerIdx++;
@@ -450,19 +497,32 @@
     renderAll();
   }
 
-  function handleGrapeClick(targetUserId, grapeIndex) {
-    if (currentUserId === targetUserId) {
-      alert('본인의 포도판에는 직접 스티커를 붙일 수 없어요! 상대방 판에만 붙일 수 있습니다.');
-      return;
-    }
+  function openStickerModal(targetUserId) {
+    selectedTargetUser = targetUserId;
     const tab = appState.users[targetUserId].activeTab;
     const board = appState.boards[targetUserId][tab];
-    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
+    let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    let maxAllowed = 15 - currentTotal;
 
-    selectedTargetUser = targetUserId;
-    selectedVal = 1;
-    document.getElementById('modalTitle').innerText = `${tab === 'like' ? '💖 좋아요' : '💔 나빠요'} 스티커 선물`;
+    if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
+
+    selectedVal = maxAllowed < 1 ? maxAllowed : 1;
+
+    document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 💔';
     document.getElementById('stickerReason').value = '';
+
+    const btn05 = document.getElementById('val-05');
+    const btn1 = document.getElementById('val-1');
+    if (maxAllowed < 1) {
+      btn1.style.display = 'none';
+      btn05.className = 'selected';
+      selectedVal = 0.5;
+    } else {
+      btn1.style.display = 'block';
+      btn1.className = 'selected';
+      selectedVal = 1;
+    }
+
     document.getElementById('addModal').classList.add('active');
   }
 
@@ -473,25 +533,76 @@
     document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
-  async function submitSticker() {
+  async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
 
     const tab = appState.users[selectedTargetUser].activeTab;
     const board = appState.boards[selectedTargetUser][tab];
-    const today = new Date().toISOString().split('T')[0];
+    let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    let maxAllowed = 15 - currentTotal;
 
-    board.stickers.push({ value: selectedVal, reason: reason, date: today, from: currentUserId });
-
-    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
-      alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
-      appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
-      board.currentVol += 1; board.stickers = []; board.memo = '';
+    if (selectedVal > maxAllowed) {
+      alert(`남은 칸이 ${maxAllowed}개이므로 해당 개수만큼만 부여할 수 있습니다!`);
+      return;
     }
 
-    await saveCloudData();
-    renderAll();
+    const today = new Date().toISOString().split('T')[0];
+
+    if (tab === 'like') {
+      board.stickers.push({ value: selectedVal, reason: reason, date: today, from: currentUserId });
+
+      if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
+        alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
+        appState.boards[selectedTargetUser].archive.push({ vol: board.currentVol, type: tab, stickers: [...board.stickers], memo: board.memo, completedDate: today });
+        board.currentVol += 1; board.stickers = []; board.memo = '';
+      }
+
+      await saveCloudData();
+      renderAll();
+      alert('좋아요 스티커가 정상적으로 부여되었습니다!');
+    } else {
+      if (!appState.requests) appState.requests = [];
+      appState.requests.push({
+        id: Date.now(),
+        from: currentUserId,
+        to: selectedTargetUser,
+        type: 'bad',
+        value: selectedVal,
+        reason: reason,
+        date: today,
+        status: 'pending'
+      });
+
+      await saveCloudData();
+      updateRequestBadge();
+      alert('상대방에게 나빠요 스티커 요청을 보냈습니다! 상대방이 승낙해야 반영돼요.');
+    }
+
     closeAddModal();
+  }
+
+  async function pokeUser(targetUserId) {
+    const reason = prompt('어떤 일로 찌르시나요? (좋아요 요청 사유 입력)');
+    if (!reason || reason.trim() === '') return;
+
+    const today = new Date().toISOString().split('T')[0];
+    if (!appState.requests) appState.requests = [];
+    
+    appState.requests.push({
+      id: Date.now(),
+      from: currentUserId,
+      to: targetUserId,
+      type: 'like',
+      value: 1,
+      reason: `[찌르기] ${reason.trim()}`,
+      date: today,
+      status: 'pending'
+    });
+
+    await saveCloudData();
+    updateRequestBadge();
+    alert('상대방에게 좋아요 요청을 찔렀습니다! 👆');
   }
 
   function showStickerDetail(targetUserId, item, tab) {
@@ -520,7 +631,73 @@
 
   function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
 
-  // 이용약관 조회 및 수정 기능
+  function openInboxModal() {
+    const inboxList = document.getElementById('inboxList');
+    const myRequests = (appState.requests || []).filter(r => r.to === currentUserId && r.status === 'pending');
+
+    if (myRequests.length === 0) {
+      inboxList.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.85rem;">받은 대기 중인 요청이 없습니다.</p>`;
+    } else {
+      inboxList.innerHTML = '';
+      myRequests.forEach(req => {
+        const fromName = appState.users[req.from].name;
+        const card = document.createElement('div');
+        card.className = `request-card ${req.type}`;
+        card.innerHTML = `
+          <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
+            <span>${fromName}님의 ${req.type === 'like' ? '💖 좋아요' : '💔 나빠요'} 요청 (${req.value}개)</span>
+            <span style="font-size:0.75rem; color:#888;">${req.date}</span>
+          </div>
+          <p style="font-size:0.83rem; color:#555; margin-bottom:10px; word-break:break-all;">"${req.reason}"</p>
+          <div style="display:flex; gap:6px;">
+            <button class="memo-save-btn" style="flex:1; padding:6px; font-size:0.78rem;" onclick="acceptRequest(${req.id})">승낙하기</button>
+            <button class="memo-del-btn" style="flex:1; padding:6px; font-size:0.78rem;" onclick="rejectRequest(${req.id})">거절</button>
+          </div>
+        `;
+        inboxList.appendChild(card);
+      });
+    }
+    document.getElementById('inboxModal').classList.add('active');
+  }
+  function closeInboxModal() { document.getElementById('inboxModal').classList.remove('active'); }
+
+  async function acceptRequest(reqId) {
+    const req = (appState.requests || []).find(r => r.id === reqId);
+    if (!req) return;
+
+    const board = appState.boards[currentUserId][req.type];
+    let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    let maxAllowed = 15 - currentTotal;
+
+    if (req.value > maxAllowed) {
+      alert(`남은 칸이 ${maxAllowed}개뿐이어서 이 요청을 승낙할 수 없습니다! (초과됨)`);
+      return;
+    }
+
+    board.stickers.push({ value: req.value, reason: req.reason, date: req.date, from: req.from });
+
+    if (board.stickers.reduce((acc, cur) => acc + cur.value, 0) >= 15) {
+      alert('🎉 포도판 완성! 보관함에 이관되었습니다.');
+      appState.boards[currentUserId].archive.push({ vol: board.currentVol, type: req.type, stickers: [...board.stickers], memo: board.memo, completedDate: req.date });
+      board.currentVol += 1; board.stickers = []; board.memo = '';
+    }
+
+    req.status = 'accepted';
+    await saveCloudData();
+    renderAll();
+    openInboxModal();
+  }
+
+  async function rejectRequest(reqId) {
+    const req = (appState.requests || []).find(r => r.id === reqId);
+    if (req) {
+      req.status = 'rejected';
+      await saveCloudData();
+      openInboxModal();
+      updateRequestBadge();
+    }
+  }
+
   let isEditingTerms = false;
   function openTermsModal() {
     isEditingTerms = false;
@@ -555,7 +732,6 @@
     renderTermsModal();
   }
 
-  // 보관함 (본인 및 상대방 설정 이름 연동)
   function openArchiveModal() {
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
     const btn1 = document.getElementById('filter-user1');
@@ -572,6 +748,7 @@
   }
   function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
+  // 💡 보관함 아코디언 기능 (기본 접힘 상태)
   function filterArchive(userId) {
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
     document.getElementById('filter-user1').className = userId === currentUserId ? 'selected' : '';
@@ -582,13 +759,33 @@
     if (!archive || archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
 
     listDiv.innerHTML = '';
-    archive.forEach(item => {
+    archive.forEach((item, index) => {
       const card = document.createElement('div');
       card.className = 'archive-card';
-      card.innerHTML = `<div class="archive-card-header"><span>${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol}</span><span>완성일: ${item.completedDate}</span></div><ul style="padding-left:16px;">` + 
-        item.stickers.map(s => `<li style="font-size:0.78rem; color:#666;">[${s.date}] ${s.reason} (${s.value}개)</li>`).join('') + `</ul>`;
+      card.innerHTML = `
+        <div class="archive-card-header" onclick="toggleArchiveBody(${index})">
+          <span>${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
+          <span id="archive-toggle-text-${index}" style="font-size:0.75rem; color:#ff8da1; font-weight:600;">펼치기 ▼</span>
+        </div>
+        <div class="archive-body" id="archive-body-${index}">
+          <ul style="padding-left:16px; margin-top:4px;">` + 
+          item.stickers.map(s => `<li style="font-size:0.78rem; color:#666; margin-bottom:3px;">[${s.date}] ${s.reason} (${s.value}개)</li>`).join('') + `</ul>
+        </div>
+      `;
       listDiv.appendChild(card);
     });
+  }
+
+  function toggleArchiveBody(index) {
+    const body = document.getElementById(`archive-body-${index}`);
+    const toggleText = document.getElementById(`archive-toggle-text-${index}`);
+    if (body.classList.contains('open')) {
+      body.classList.remove('open');
+      toggleText.innerText = '펼치기 ▼';
+    } else {
+      body.classList.add('open');
+      toggleText.innerText = '접기 ▲';
+    }
   }
 </script>
 </body>
