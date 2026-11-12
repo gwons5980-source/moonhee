@@ -89,9 +89,9 @@
     .modal textarea { width: 100%; height: 80px; padding: 10px; border: 1px solid var(--border-color); border-radius: 12px; resize: none; margin-bottom: 14px; font-size: 0.85rem; outline: none; }
     .modal-btns { display: flex; gap: 8px; }
     .modal-btns button { flex: 1; padding: 10px; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
-    .modal-btns .cancel { background: #f0f0f0; color: #666; }
-    .modal-btns .save { background: var(--pink-main); color: white; }
-    .modal-btns .delete-btn { background: #ff6b81; color: white; }
+    .modal-btns .cancel { background: #f0f0f0; color: #666; border: none; }
+    .modal-btns .save { background: var(--pink-main); color: white; border: none; }
+    .modal-btns .delete-btn { background: #ff6b81; color: white; border: none; }
     
     .request-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
     .request-card.bad { background: var(--bad-soft); border-color: var(--bad-border); }
@@ -381,16 +381,13 @@
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
     
     if (isMyCard) {
-      // 내 판 카드일 때는 찌르기(요청하기) 버튼을 제공하여 내 판에 채워달라고 요청 가능
-      let requestBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="내 판에 좋아요 스티커 요청하기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
-          ${requestBtnHtml}
           <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>
         </div>
       `;
     } else {
-      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="내 판에 좋아요 스티커 요청하기">👉</button>` : ``;
+      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="좋아요 스티커 요청하기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
           ${pokeBtnHtml}
@@ -553,10 +550,9 @@
     renderAll();
   }
 
-  // 💡 찌르기(요청하기) 모달 열기: 1개/0.5개 선택창과 사유 입력창 표시
   function openRequestModal() {
     isRequestMode = true;
-    selectedTargetUser = (currentUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청 전송
+    selectedTargetUser = (currentUserId === 'user1' ? 'user2' : 'user1');
     
     const board = appState.boards[currentUserId]['like'];
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
@@ -564,7 +560,7 @@
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); isRequestMode = false; return; }
 
     selectedVal = 1;
-    document.getElementById('modalTitle').innerText = '👉 내 판에 좋아요 스티커 찌르기(요청)';
+    document.getElementById('modalTitle').innerText = '좋아요 스티커 요청하기';
     document.getElementById('stickerReason').value = '';
 
     const btn05 = document.getElementById('val-05');
@@ -632,7 +628,7 @@
 
       await saveCloudData();
       updateRequestBadge();
-      alert('상대방에게 좋아요 찌르기(요청)를 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
+      alert('상대방에게 좋아요 스티커 요청을 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
       closeAddModal();
       return;
     }
@@ -745,13 +741,13 @@
         card.className = `request-card ${req.type}`;
         card.innerHTML = `
           <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
-            <span>${fromName}님의 ${req.isRequest ? '👉 [찌르기 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
+            <span>${fromName}님의 ${req.isRequest ? '👉 [좋아요 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
             <span style="font-size:0.75rem; color:#888;">${req.date}</span>
           </div>
           <p style="font-size:0.83rem; color:#555; margin-bottom:10px; word-break:break-all;">"${req.reason}"</p>
           <div style="display:flex; gap:6px;">
-            <button class="memo-save-btn" style="flex:1; padding:6px; font-size:0.78rem;" onclick="acceptRequest(${req.id})">승낙하기</button>
-            <button class="memo-del-btn" style="flex:1; padding:6px; font-size:0.78rem;" onclick="rejectRequest(${req.id})">거절</button>
+            <button class="memo-save-btn" style="flex:1; padding:6px; font-size:1.1rem; background:#4ade80; border:none; border-radius:8px;" onclick="acceptRequest(${req.id})">✅</button>
+            <button class="memo-del-btn" style="flex:1; padding:6px; font-size:1.1rem; background:#f87171; border:none; border-radius:8px;" onclick="rejectRequest(${req.id})">❌</button>
           </div>
         `;
         inboxList.appendChild(card);
