@@ -20,12 +20,14 @@
       --border-radius: 24px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding: 20px 12px; min-height: 100vh; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; }
     .container { max-width: 900px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 0 4px; }
-    header h1 { font-size: 1.5rem; color: #ff6b81; font-weight: 800; }
-    .top-btns { display: flex; gap: 6px; }
-    .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); }
+    
+    /* 헤더 한 줄 고정 및 줄바꿈 방지 */
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding: 0 4px; gap: 8px; }
+    header h1 { font-size: 1.35rem; color: #ff6b81; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
+    .top-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); white-space: nowrap; }
     
     /* 로그인 오버레이 화면 */
     .auth-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,249,251,0.95); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
@@ -37,11 +39,17 @@
     .auth-btn { width: 100%; padding: 12px; background: var(--pink-main); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
     .auth-switch { font-size: 0.8rem; color: #666; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-    .dual-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
-    .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); }
-    .user-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--pink-soft); }
-    .user-name { font-size: 1.15rem; font-weight: 700; color: #333; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .user-name:hover { color: #ff6b81; }
+    .dual-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 18px 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); }
+    .user-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .user-name { font-size: 1.15rem; font-weight: 700; color: #333; cursor: pointer; }
+    .user-name.editable:hover { color: #ff6b81; text-decoration: underline; text-underline-offset: 4px; }
+    
+    /* 접기/펼치기 버튼 및 영역 */
+    .fold-btn { background: var(--pink-soft); border: none; padding: 5px 11px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: var(--pink-dark); cursor: pointer; white-space: nowrap; }
+    .card-body-content { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--pink-soft); }
+    .card-body-content.folded { display: none; }
+
     .board-toggle { display: flex; background: var(--pink-soft); border-radius: 16px; padding: 3px; margin-bottom: 14px; }
     .board-toggle.bad-mode { background: var(--bad-soft); }
     .board-toggle button { flex: 1; border: none; background: transparent; padding: 7px; border-radius: 13px; font-size: 0.85rem; font-weight: 600; color: #888; cursor: pointer; }
@@ -60,7 +68,7 @@
     .memo-section.bad-mode { background: #f4f6f9; border-color: #cbd5e1; }
     .memo-line { font-size: 0.85rem; font-weight: 600; color: #444; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
     .memo-textarea { width: 100%; height: 50px; padding: 8px; border: 1px solid #ccc; border-radius: 10px; font-size: 0.85rem; resize: none; outline: none; margin-bottom: 6px; }
-    .memo-btns { display: flex; gap: 6px; justify-content: flex-end; }
+    .memo-btns { display: flex; gap: 6px; justify-content: flex-end; flex-shrink: 0; }
     .memo-btns button { padding: 4px 10px; border: none; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
     .memo-edit-btn { background: #e2e8f0; color: #475569; }
     .memo-save-btn { background: var(--pink-main); color: white; }
@@ -70,6 +78,8 @@
     .modal { background: white; border-radius: 24px; padding: 22px; width: 90%; max-width: 380px; max-height: 80vh; overflow-y: auto; box-shadow: 0 15px 35px rgba(0,0,0,0.1); border: 1px solid var(--pink-soft); }
     .modal-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
     .modal h3 { font-size: 1.05rem; color: #333; }
+    .small-edit-btn { background: #f0f0f0; border: none; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; color: #555; cursor: pointer; }
+    .terms-textarea { width: 100%; height: 160px; padding: 10px; border: 1px solid var(--border-color); border-radius: 12px; font-size: 0.85rem; line-height: 1.5; resize: vertical; outline: none; margin-bottom: 12px; }
     .modal-options { display: flex; gap: 8px; margin-bottom: 12px; }
     .modal-options button { flex: 1; padding: 9px; border: 1px solid var(--border-color); border-radius: 12px; background: white; color: #666; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
     .modal-options button.selected { border-color: var(--pink-main); background: var(--pink-soft); color: var(--pink-dark); }
@@ -103,28 +113,27 @@
     <div class="top-btns">
       <button class="top-btn" onclick="openTermsModal()">📋 이용약관</button>
       <button class="top-btn" onclick="openArchiveModal()">📜 보관함</button>
-      <button class="top-btn" onclick="handleLogout()" style="color:#ff6b81;">로그아웃</button>
     </div>
   </header>
 
-  <div class="dual-board" id="dualBoardContainer">
-    <!-- 동적으로 내 카드와 상대방 카드가 내 기준 좌/우로 배치됩니다 -->
-  </div>
+  <div class="dual-board" id="dualBoardContainer"></div>
 </div>
 
-<!-- 모달창들 -->
+<!-- 이용약관 모달 -->
 <div class="modal-overlay" id="termsModal">
   <div class="modal">
     <div class="modal-header-flex">
       <h3>📋 우리 둘만의 이용 약관</h3>
+      <button class="small-edit-btn" id="termsEditBtn" onclick="toggleTermsEdit()">수정</button>
     </div>
     <div id="termsBody"></div>
-    <div class="modal-btns">
+    <div class="modal-btns" id="termsModalBtns">
       <button class="cancel" onclick="closeTermsModal()">닫기</button>
     </div>
   </div>
 </div>
 
+<!-- 스티커 선물 모달 -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
     <h3 id="modalTitle">스티커 선물하기</h3>
@@ -140,6 +149,7 @@
   </div>
 </div>
 
+<!-- 스티커 상세 모달 -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <h3 id="detailTitle">🍇 스티커 정보</h3>
@@ -150,6 +160,7 @@
   </div>
 </div>
 
+<!-- 보관함 모달 -->
 <div class="modal-overlay" id="archiveModal">
   <div class="modal">
     <h3>📜 완성된 포도판 보관함</h3>
@@ -171,6 +182,7 @@
 
   let currentUserId = null;
   let isSignUpMode = false;
+  let foldedState = { user1: false, user2: false };
 
   const smileSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 58 Q 50 82 72 58" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
   const sadSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 72 Q 50 52 72 72" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
@@ -231,11 +243,6 @@
     await loadCloudData();
   }
 
-  async function handleLogout() {
-    await supabaseClient.auth.signOut();
-    location.reload();
-  }
-
   async function loadCloudData() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) return;
@@ -258,6 +265,10 @@
       await saveCloudData();
     }
 
+    // 접속 시 기본 화면은 각자 '좋아요' 판이 열리도록 설정
+    appState.users.user1.activeTab = 'like';
+    appState.users.user2.activeTab = 'like';
+
     renderAll();
   }
 
@@ -273,7 +284,7 @@
     const container = document.getElementById('dualBoardContainer');
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
 
-    // 💡 내 카드가 항상 왼쪽에, 상대방 카드가 오른쪽에 오도록 동적 렌더링!
+    // 로그인한 본인의 카드가 항상 첫 번째(모바일 상단 / PC 왼쪽)에 배치
     container.innerHTML = `
       ${createCardHtml(currentUserId)}
       ${createCardHtml(otherUserId)}
@@ -284,30 +295,36 @@
   }
 
   function createCardHtml(userId) {
+    const isFolded = foldedState[userId];
     return `
       <div class="user-card" id="card-${userId}">
         <div class="user-card-header">
-          <span class="user-name" id="name-${userId}" onclick="editUserName('${userId}')"></span>
+          <span class="user-name ${userId === currentUserId ? 'editable' : ''}" id="name-${userId}" onclick="editUserName('${userId}')"></span>
+          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>
         </div>
-        <div class="board-toggle" id="toggle-${userId}">
-          <button class="active like" onclick="switchBoard('${userId}', 'like')">좋아요</button>
-          <button class="bad" onclick="switchBoard('${userId}', 'bad')">나빠요</button>
+        <div class="card-body-content ${isFolded ? 'folded' : ''}" id="body-${userId}">
+          <div class="board-toggle" id="toggle-${userId}">
+            <button class="active like" onclick="switchBoard('${userId}', 'like')">좋아요</button>
+            <button class="bad" onclick="switchBoard('${userId}', 'bad')">나빠요</button>
+          </div>
+          <div class="board-status">
+            <span id="vol-${userId}">Vol. 1</span>
+            <span id="count-${userId}">0 / 15개</span>
+          </div>
+          <div class="grape-container" id="grape-${userId}"></div>
+          <div class="memo-section" id="memoSection-${userId}"></div>
         </div>
-        <div class="board-status">
-          <span id="vol-${userId}">Vol. 1</span>
-          <span id="count-${userId}">0 / 15개</span>
-        </div>
-        <div class="grape-container" id="grape-${userId}"></div>
-        <div class="memo-section" id="memoSection-${userId}"></div>
       </div>
     `;
   }
 
+  function toggleFold(userId) {
+    foldedState[userId] = !foldedState[userId];
+    renderAll();
+  }
+
   async function editUserName(userId) {
-    if (currentUserId !== userId) {
-      alert('본인의 이름만 변경할 수 있습니다!');
-      return;
-    }
+    if (currentUserId !== userId) return; // 상대방 이름은 클릭해도 무반응
     const currentName = appState.users[userId].name;
     const newName = prompt('사용하실 이름을 입력해주세요:', currentName);
     if (newName && newName.trim() !== '') {
@@ -325,8 +342,9 @@
     const memoSection = document.getElementById(`memoSection-${userId}`);
     const nameSpan = document.getElementById(`name-${userId}`);
     
+    // 연필 아이콘 없이 깔끔하게 이름만 표시
     if (nameSpan) {
-      nameSpan.innerText = `${appState.users[userId].name} ✏️`;
+      nameSpan.innerText = appState.users[userId].name;
     }
 
     if (tab === 'bad') {
@@ -384,10 +402,6 @@
 
   function renderMemo(userId, tab, memoSection) {
     const board = appState.boards[userId][tab];
-    
-    // 권한 분리: 
-    // - 좋아요 판(like): 내 카드일 때만 내가 수정 가능 (내 바라는 것)
-    // - 나빠요 판(bad): 상대방 카드일 때만 내가 수정 가능 (상대방 판에 내가 바라는 것)
     const isMyCard = (userId === currentUserId);
     const canEdit = (tab === 'like' && isMyCard) || (tab === 'bad' && !isMyCard);
     const icon = tab === 'like' ? '✨' : '🔥';
@@ -505,18 +519,64 @@
   }
 
   function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
-  function openTermsModal() { 
-    const termsBody = document.getElementById('termsBody');
-    termsBody.innerHTML = `<ul style="padding-left:18px; line-height:1.6; font-size:0.88rem; color:#555;">` + appState.terms.map(t => `<li style="margin-bottom:8px;">${t}</li>`).join('') + `</ul>`;
-    document.getElementById('termsModal').classList.add('active'); 
+
+  // 이용약관 조회 및 수정 기능
+  let isEditingTerms = false;
+  function openTermsModal() {
+    isEditingTerms = false;
+    renderTermsModal();
+    document.getElementById('termsModal').classList.add('active');
   }
   function closeTermsModal() { document.getElementById('termsModal').classList.remove('active'); }
-  function openArchiveModal() { filterArchive(currentUserId); document.getElementById('archiveModal').classList.add('active'); }
+  function toggleTermsEdit() {
+    isEditingTerms = !isEditingTerms;
+    renderTermsModal();
+  }
+  function renderTermsModal() {
+    const termsBody = document.getElementById('termsBody');
+    const editBtn = document.getElementById('termsEditBtn');
+    const btnsDiv = document.getElementById('termsModalBtns');
+
+    if (isEditingTerms) {
+      editBtn.style.display = 'none';
+      termsBody.innerHTML = `<textarea class="terms-textarea" id="termsEditInput">${appState.terms.join('\n')}</textarea>`;
+      btnsDiv.innerHTML = `<button class="cancel" onclick="toggleTermsEdit()">취소</button><button class="save" onclick="saveTerms()">저장</button>`;
+    } else {
+      editBtn.style.display = 'inline-block';
+      termsBody.innerHTML = `<ul style="padding-left:18px; line-height:1.6; font-size:0.88rem; color:#555; margin-bottom:12px;">` + appState.terms.map(t => `<li style="margin-bottom:8px;">${t}</li>`).join('') + `</ul>`;
+      btnsDiv.innerHTML = `<button class="cancel" onclick="closeTermsModal()">닫기</button>`;
+    }
+  }
+  async function saveTerms() {
+    const raw = document.getElementById('termsEditInput').value.trim();
+    appState.terms = raw ? raw.split('\n').map(s => s.trim()).filter(Boolean) : [];
+    await saveCloudData();
+    isEditingTerms = false;
+    renderTermsModal();
+  }
+
+  // 보관함 (본인 및 상대방 설정 이름 연동)
+  function openArchiveModal() {
+    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+    const btn1 = document.getElementById('filter-user1');
+    const btn2 = document.getElementById('filter-user2');
+
+    btn1.innerText = appState.users[currentUserId].name;
+    btn1.onclick = () => filterArchive(currentUserId);
+
+    btn2.innerText = appState.users[otherUserId].name;
+    btn2.onclick = () => filterArchive(otherUserId);
+
+    filterArchive(currentUserId);
+    document.getElementById('archiveModal').classList.add('active');
+  }
   function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
   function filterArchive(userId) {
-    document.getElementById('filter-user1').className = userId === 'user1' ? 'selected' : '';
-    document.getElementById('filter-user2').className = userId === 'user2' ? 'selected' : '';
+    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+    document.getElementById('filter-user1').className = userId === currentUserId ? 'selected' : '';
+    document.getElementById('filter-user2').className = userId === otherUserId ? 'selected' : '';
+
     const listDiv = document.getElementById('archiveList');
     const archive = appState.boards[userId].archive;
     if (!archive || archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
