@@ -39,7 +39,7 @@
     .auth-btn { width: 100%; padding: 12px; background: var(--pink-main); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
     .auth-switch { font-size: 0.8rem; color: #666; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-    .dual-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+    .dual-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
     .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 18px 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); }
     .user-card-header { display: flex; justify-content: space-between; align-items: center; }
     .user-name { font-size: 1.15rem; font-weight: 700; color: #333; cursor: pointer; }
@@ -195,14 +195,32 @@
   </div>
 </div>
 
-<!-- 보관된 판 수정용 모달 -->
+<!-- 보관된 판 수정용 모달 (포도판 형태로 표시) -->
 <div class="modal-overlay" id="archiveEditModal">
-  <div class="modal">
-    <h3>✏️ 완성된 포도판 수정</h3>
-    <div id="archiveEditItemsList" style="max-height: 220px; overflow-y: auto; margin-bottom: 12px;"></div>
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-header-flex">
+      <h3 id="archiveEditTitle">✏️ 완성된 포도판 수정</h3>
+      <button class="cancel" style="padding:4px 10px; font-size:0.75rem;" onclick="closeArchiveEditModal()">닫기</button>
+    </div>
+    <div class="board-status" style="margin-bottom: 10px;">
+      <span id="archiveEditVol">Vol. 1</span>
+      <span id="archiveEditCount">15 / 15개</span>
+    </div>
+    <div class="grape-container" id="archiveEditGrapeContainer" style="margin-bottom: 14px;"></div>
     <div class="modal-btns">
-      <button class="cancel" onclick="closeArchiveEditModal()">취소</button>
-      <button class="save" onclick="saveArchiveEdit()">저장하기</button>
+      <button class="save" onclick="closeArchiveEditModal()">확인 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- 보관된 판 내부 개별 스티커 상세/삭제 모달 -->
+<div class="modal-overlay" id="archiveItemDetailModal">
+  <div class="modal">
+    <h3>🍇 스티커 정보</h3>
+    <div id="archiveItemDetailBody" style="margin-bottom:15px; line-height: 1.5; color:#555; font-size: 0.88rem;"></div>
+    <div class="modal-btns">
+      <button class="delete-btn" onclick="deleteArchiveStickerItem()">삭제하기</button>
+      <button class="cancel" onclick="closeArchiveItemDetailModal()">닫기</button>
     </div>
   </div>
 </div>
@@ -242,7 +260,8 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null;
+  let editingArchiveTarget = null; // { userId, index }
+  let currentEditingArchiveItem = null; // 보관함 포도판 수정 중 선택한 개별 스티커
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -346,14 +365,14 @@
     const isOtherCard = (userId !== currentUserId);
     const tab = appState.users[userId].activeTab;
     
-    let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>`;
+    let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
     if (isOtherCard) {
       let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
           ${pokeBtnHtml}
           <button class="sticker-btn" onclick="openStickerModal('${userId}')">스티커</button>
-          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '펼치기 ▼' : '접기 ▲'}</button>
+          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>
         </div>
       `;
     }
@@ -782,9 +801,9 @@
         <div class="archive-card-header">
           <span onclick="toggleArchiveBody(${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
           <div style="display:flex; gap:6px; align-items:center;">
-            <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="수정">✏️</button>
+            <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="포도판 형태로 수정">✏️</button>
             ${isLatest ? `<button class="memo-del-btn" style="padding:3px 8px; font-size:0.7rem;" onclick="restoreLatestArchive('${userId}')">판 복구하기</button>` : ''}
-            <span onclick="toggleArchiveBody(${index})" style="font-size:0.75rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${index}">펼치기 ▼</span>
+            <span onclick="toggleArchiveBody(${index})" style="font-size:0.85rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${index}">▼</span>
           </div>
         </div>
         <div class="archive-body" id="archive-body-${index}">
@@ -801,10 +820,10 @@
     const toggleText = document.getElementById(`archive-toggle-text-${index}`);
     if (body.classList.contains('open')) {
       body.classList.remove('open');
-      toggleText.innerText = '펼치기 ▼';
+      toggleText.innerText = '▼';
     } else {
       body.classList.add('open');
-      toggleText.innerText = '접기 ▲';
+      toggleText.innerText = '▲';
     }
   }
 
@@ -827,20 +846,51 @@
     alert('포도판이 성공적으로 복구되었습니다!');
   }
 
+  // 💡 보관된 판을 실제 포도판 형태로 열어서 수정/삭제하는 기능
   function openArchiveEdit(userId, index) {
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
-    const listDiv = document.getElementById('archiveEditItemsList');
 
-    listDiv.innerHTML = '';
-    item.stickers.forEach((s, sIdx) => {
-      listDiv.innerHTML += `
-        <div style="background:#fff9fb; padding:8px; border-radius:10px; margin-bottom:8px; border:1px solid #ffe4e1;">
-          <div style="font-size:0.75rem; color:#888; margin-bottom:2px;">날짜: ${s.date}</div>
-          <input type="text" id="edit-reason-${sIdx}" value="${s.reason}" style="width:100%; padding:6px; font-size:0.8rem; border:1px solid #ccc; border-radius:6px; margin-bottom:4px;" placeholder="사유">
-          <input type="number" step="0.5" id="edit-val-${sIdx}" value="${s.value}" style="width:100%; padding:6px; font-size:0.8rem; border:1px solid #ccc; border-radius:6px;" placeholder="개수 (0.5 또는 1)">
-        </div>
-      `;
+    document.getElementById('archiveEditTitle').innerText = `✏️ ${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} 수정`;
+    document.getElementById('archiveEditVol').innerText = `${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol}`;
+    document.getElementById('archiveEditCount').innerText = `${item.stickers.reduce((a,c)=>a+c.value,0)} / 15개`;
+
+    const container = document.getElementById('archiveEditGrapeContainer');
+    container.className = `grape-container ${item.type === 'bad' ? 'bad-mode' : ''}`;
+    container.innerHTML = '';
+
+    const layout = [5, 4, 3, 2, 1];
+    let stickerIdx = 0;
+
+    layout.forEach(rowCount => {
+      const rowDiv = document.createElement('div');
+      rowDiv.className = 'grape-row';
+      for (let i = 0; i < rowCount; i++) {
+        const grapeIndex = stickerIdx;
+        const grape = document.createElement('div');
+        grape.className = 'grape-grape';
+
+        let accumulated = 0, filledType = null, itemData = null;
+        for (let st of item.stickers) {
+          accumulated += st.value;
+          if (accumulated - st.value < grapeIndex + 1 && accumulated > grapeIndex) {
+            itemData = st;
+            filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
+          }
+        }
+
+        if (filledType) {
+          grape.classList.add(filledType, item.type);
+          grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
+          // 포도알을 누르면 해당 스티커 상세/삭제 창 오픈
+          grape.onclick = () => openArchiveItemDetail(itemData);
+        } else {
+          grape.innerText = grapeIndex + 1;
+        }
+        rowDiv.appendChild(grape);
+        stickerIdx++;
+      }
+      container.appendChild(rowDiv);
     });
 
     document.getElementById('archiveEditModal').classList.add('active');
@@ -848,24 +898,46 @@
 
   function closeArchiveEditModal() {
     document.getElementById('archiveEditModal').classList.remove('active');
+    openArchiveModal(); // 보관함 목록 갱신
   }
 
-  async function saveArchiveEdit() {
-    if (!editingArchiveTarget) return;
-    const { userId, index } = editingArchiveTarget;
-    const item = appState.boards[userId].archive[index];
+  // 보관함 포도판 내 특정 스티커 클릭 시 상세 및 삭제
+  function openArchiveItemDetail(item) {
+    currentEditingArchiveItem = item;
+    document.getElementById('archiveItemDetailBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
+    document.getElementById('archiveItemDetailModal').classList.add('active');
+  }
 
-    item.stickers.forEach((s, sIdx) => {
-      const newReason = document.getElementById(`edit-reason-${sIdx}`).value.trim();
-      const newVal = parseFloat(document.getElementById(`edit-val-${sIdx}`).value);
-      if (newReason) s.reason = newReason;
-      if (!isNaN(newVal) && newVal > 0) s.value = newVal;
-    });
+  function closeArchiveItemDetailModal() {
+    document.getElementById('archiveItemDetailModal').classList.remove('active');
+  }
+
+  async function deleteArchiveStickerItem() {
+    if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 판이 미완성 상태가 되어 현재 진행 중인 판으로 복구됩니다!)')) return;
+    if (!editingArchiveTarget || !currentEditingArchiveItem) return;
+
+    const { userId, index } = editingArchiveTarget;
+    const archive = appState.boards[userId].archive;
+    const archivedBoard = archive[index];
+
+    // 스티커 배열에서 제거
+    const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveItem);
+    if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
+
+    // 보관함에서 해당 판을 꺼내어 현재 진행 중인 판의 맨 앞에 합치기
+    archive.splice(index, 1); // 보관함에서 제거
+    const activeTab = archivedBoard.type;
+    const activeBoard = appState.boards[userId][activeTab];
+
+    activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
+    activeBoard.currentVol = archivedBoard.vol;
 
     await saveCloudData();
+    closeArchiveItemDetailModal();
     closeArchiveEditModal();
-    openArchiveModal();
-    alert('수정되었습니다!');
+    closeArchiveModal();
+    renderAll();
+    alert('스티커가 삭제되고 해당 판이 현재 진행 판으로 복구되었습니다!');
   }
 </script>
 </body>
