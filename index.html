@@ -23,9 +23,11 @@
     body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; }
     .container { max-width: 900px; margin: 0 auto; }
     
-    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; padding: 0 4px; gap: 8px; }
-    header h1 { font-size: 1.35rem; color: #ff6b81; font-weight: 800; white-space: nowrap; flex-shrink: 0; }
-    .top-btns { display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
+    /* 💡 모바일 화면에서 버튼들이 길어져서 벗어나지 않도록 세로 정렬/줄바꿈 적용 */
+    header { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 18px; padding: 0 4px; gap: 10px; }
+    header h1 { font-size: 1.35rem; color: #ff6b81; font-weight: 800; }
+    .top-btns { display: flex; gap: 6px; flex-wrap: wrap; width: 100%; justify-content: flex-start; }
+    
     .top-btn { background: #fff; border: 1px solid var(--border-color); padding: 7px 12px; border-radius: 18px; font-size: 0.8rem; font-weight: 600; color: #666; cursor: pointer; box-shadow: 0 2px 8px rgba(255,182,193,0.15); white-space: nowrap; position: relative; }
     
     .badge-dot { position: absolute; top: -3px; right: -3px; background: #ff6b81; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 0.65rem; display: flex; align-items: center; justify-content: center; font-weight: bold; }
@@ -264,6 +266,7 @@
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
   let editingArchiveTarget = null;
   let currentEditingArchiveSticker = null;
+  let isRequestMode = false; // 내 판에 스티커 달라고 요청하는 모드인지 여부
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -380,7 +383,6 @@
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
     
     if (isMyCard) {
-      // 내 카드일 때 좋아요 탭이면 '요청하기' 버튼 노출
       let requestBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal('${userId}')" title="내 판에 좋아요 스티커 요청하기">🙋‍♀️</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
@@ -552,11 +554,10 @@
     renderAll();
   }
 
-  // 좋아요 요청하기 모달 열기 (내 판에 달라고 상대에게 요청)
-  let isRequestMode = false;
+  // 내 판에 좋아요 달라고 요청하는 모달 열기
   function openRequestModal(myUserId) {
     isRequestMode = true;
-    selectedTargetUser = (myUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청을 보냄
+    selectedTargetUser = (myUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청 보냄
     const board = appState.boards[myUserId]['like'];
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
 
@@ -615,19 +616,18 @@
 
     const today = new Date().toISOString().split('T')[0];
 
-    // 만약 내가 내 판에 달라고 요청하는 모달이었다면 요청함으로 전송
     if (isRequestMode) {
       if (!appState.requests) appState.requests = [];
       appState.requests.push({
         id: Date.now(),
         from: currentUserId,
-        to: selectedTargetUser, // 상대방에게 승낙 요청
+        to: selectedTargetUser,
         type: 'like',
         value: selectedVal,
         reason: reason,
         date: today,
         status: 'pending',
-        isMyRequest: true // 내 판에 달라고 요청한 것임을 표시
+        isRequest: true // 내 판에 달라고 요청한 것
       });
 
       await saveCloudData();
@@ -653,7 +653,7 @@
       let firstPart = maxAllowed >= selectedVal ? selectedVal : maxAllowed;
       let secondPart = selectedVal - firstPart;
 
-      board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId });
+      board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId, isRequest: false });
 
       let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
       if (newTotal >= 15) {
@@ -674,7 +674,7 @@
         board.memo = '';
 
         if (secondPart > 0) {
-          board.stickers.push({ value: secondPart, reason: `${reason} (이월)`, date: today, from: currentUserId });
+          board.stickers.push({ value: secondPart, reason: `${reason} (이월)`, date: today, from: currentUserId, isRequest: false });
         }
         alert('🎉 포도판이 완성되어 보관함에 저장되고, 새로운 판(Vol. ' + board.currentVol + ')이 생성되었습니다!');
       } else {
@@ -789,7 +789,6 @@
     if (!req) return;
 
     // 만약 내가 내 판에 달라고 요청한 것이었다면 '내 판(currentUserId)'에 스티커가 쌓임
-    // 상대방이 찔렀던 것이었다면 마찬가지로 요청받은 사람의 판에 쌓임
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
     const reqType = req.isRequest ? 'like' : req.type;
 
@@ -810,7 +809,7 @@
       reason: req.reason, 
       date: req.date, 
       from: req.isRequest ? currentUserId : req.from,
-      isRequest: true // [요청] 표시 마크 지정
+      isRequest: true // [요청] 마크 부여
     });
 
     let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
