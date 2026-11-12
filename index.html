@@ -262,8 +262,8 @@
   };
 
   let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
-  let editingArchiveTarget = null; // { userId, index }
-  let currentEditingArchiveSticker = null; // 보관함 내 수정 중인 개별 스티커 객체
+  let editingArchiveTarget = null;
+  let currentEditingArchiveSticker = null;
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -374,11 +374,21 @@
   function createCardHtml(userId) {
     const isFolded = foldedState[userId];
     const userName = (appState.users && appState.users[userId] && appState.users[userId].name) ? appState.users[userId].name : (userId === 'user1' ? '사용자 1' : '사용자 2');
-    const isOtherCard = (userId !== currentUserId);
+    const isMyCard = (userId === currentUserId);
     const tab = appState.users[userId].activeTab;
     
     let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
-    if (isOtherCard) {
+    
+    if (isMyCard) {
+      // 내 카드일 때 좋아요 탭이면 '요청하기' 버튼 노출
+      let requestBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal('${userId}')" title="내 판에 좋아요 스티커 요청하기">🙋‍♀️</button>` : ``;
+      actionButtonsHtml = `
+        <div class="header-action-btns">
+          ${requestBtnHtml}
+          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>
+        </div>
+      `;
+    } else {
       let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="pokeUser('${userId}')" title="좋아요 요청 찌르기">👉</button>` : ``;
       actionButtonsHtml = `
         <div class="header-action-btns">
@@ -542,7 +552,31 @@
     renderAll();
   }
 
+  // 좋아요 요청하기 모달 열기 (내 판에 달라고 상대에게 요청)
+  let isRequestMode = false;
+  function openRequestModal(myUserId) {
+    isRequestMode = true;
+    selectedTargetUser = (myUserId === 'user1' ? 'user2' : 'user1'); // 상대방에게 요청을 보냄
+    const board = appState.boards[myUserId]['like'];
+    let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
+
+    if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); isRequestMode = false; return; }
+
+    selectedVal = 1;
+    document.getElementById('modalTitle').innerText = '🙋‍♀️ 내 판에 좋아요 스티커 요청';
+    document.getElementById('stickerReason').value = '';
+
+    const btn05 = document.getElementById('val-05');
+    const btn1 = document.getElementById('val-1');
+    btn1.style.display = 'block';
+    btn1.className = 'selected';
+    btn05.className = '';
+
+    document.getElementById('addModal').classList.add('active');
+  }
+
   function openStickerModal(targetUserId) {
+    isRequestMode = false;
     selectedTargetUser = targetUserId;
     const tab = appState.users[targetUserId].activeTab;
     const board = appState.boards[targetUserId][tab];
@@ -564,7 +598,11 @@
     document.getElementById('addModal').classList.add('active');
   }
 
-  function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
+  function closeAddModal() { 
+    isRequestMode = false;
+    document.getElementById('addModal').classList.remove('active'); 
+  }
+
   function selectValue(val) {
     selectedVal = val;
     document.getElementById('val-1').className = val === 1 ? 'selected' : '';
@@ -574,6 +612,30 @@
   async function submitStickerModal() {
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // 만약 내가 내 판에 달라고 요청하는 모달이었다면 요청함으로 전송
+    if (isRequestMode) {
+      if (!appState.requests) appState.requests = [];
+      appState.requests.push({
+        id: Date.now(),
+        from: currentUserId,
+        to: selectedTargetUser, // 상대방에게 승낙 요청
+        type: 'like',
+        value: selectedVal,
+        reason: reason,
+        date: today,
+        status: 'pending',
+        isMyRequest: true // 내 판에 달라고 요청한 것임을 표시
+      });
+
+      await saveCloudData();
+      updateRequestBadge();
+      alert('상대방에게 좋아요 스티커 달라고 요청을 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
+      closeAddModal();
+      return;
+    }
 
     const targetUserObj = appState.users[selectedTargetUser];
     const tab = targetUserObj.activeTab;
@@ -586,7 +648,6 @@
 
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
-    const today = new Date().toISOString().split('T')[0];
 
     if (tab === 'like') {
       let firstPart = maxAllowed >= selectedVal ? selectedVal : maxAllowed;
@@ -669,7 +730,8 @@
   function showStickerDetail(targetUserId, item, tab) {
     if (!item) return;
     currentActiveItem = item; currentActiveTargetUser = targetUserId; currentActiveTab = tab;
-    document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보`;
+    let reqMark = item.isRequest ? ' <span style="color:#ff6b81; font-weight:bold;">[요청]</span>' : '';
+    document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보${reqMark}`;
     document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
     
     const btnsDiv = document.getElementById('detailModalBtns');
@@ -706,7 +768,7 @@
         card.className = `request-card ${req.type}`;
         card.innerHTML = `
           <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
-            <span>${fromName}님의 ${req.type === 'like' ? '💖 좋아요' : '💔 나빠요'} 요청 (${req.value}개)</span>
+            <span>${fromName}님의 ${req.isRequest ? '🙋‍♀️ [내 판에 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
             <span style="font-size:0.75rem; color:#888;">${req.date}</span>
           </div>
           <p style="font-size:0.83rem; color:#555; margin-bottom:10px; word-break:break-all;">"${req.reason}"</p>
@@ -726,11 +788,16 @@
     const req = (appState.requests || []).find(r => r.id === reqId);
     if (!req) return;
 
-    if (!appState.boards[currentUserId]) appState.boards[currentUserId] = {};
-    if (!appState.boards[currentUserId][req.type]) {
-      appState.boards[currentUserId][req.type] = { currentVol: 1, stickers: [], memo: '' };
+    // 만약 내가 내 판에 달라고 요청한 것이었다면 '내 판(currentUserId)'에 스티커가 쌓임
+    // 상대방이 찔렀던 것이었다면 마찬가지로 요청받은 사람의 판에 쌓임
+    const targetBoardUser = req.isRequest ? req.from : currentUserId;
+    const reqType = req.isRequest ? 'like' : req.type;
+
+    if (!appState.boards[targetBoardUser]) appState.boards[targetBoardUser] = {};
+    if (!appState.boards[targetBoardUser][reqType]) {
+      appState.boards[targetBoardUser][reqType] = { currentVol: 1, stickers: [], memo: '' };
     }
-    const board = appState.boards[currentUserId][req.type];
+    const board = appState.boards[targetBoardUser][reqType];
 
     let currentTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let maxAllowed = 15 - currentTotal;
@@ -738,17 +805,23 @@
     let firstPart = maxAllowed >= req.value ? req.value : maxAllowed;
     let secondPart = req.value - firstPart;
 
-    board.stickers.push({ value: firstPart, reason: req.reason, date: req.date, from: req.from });
+    board.stickers.push({ 
+      value: firstPart, 
+      reason: req.reason, 
+      date: req.date, 
+      from: req.isRequest ? currentUserId : req.from,
+      isRequest: true // [요청] 표시 마크 지정
+    });
 
     let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     if (newTotal >= 15) {
-      if (!Array.isArray(appState.boards[currentUserId].archive)) {
-        appState.boards[currentUserId].archive = [];
+      if (!Array.isArray(appState.boards[targetBoardUser].archive)) {
+        appState.boards[targetBoardUser].archive = [];
       }
 
-      appState.boards[currentUserId].archive.push({
+      appState.boards[targetBoardUser].archive.push({
         vol: board.currentVol,
-        type: req.type,
+        type: reqType,
         stickers: [...board.stickers],
         memo: board.memo,
         completedDate: req.date
@@ -759,7 +832,13 @@
       board.memo = '';
 
       if (secondPart > 0) {
-        board.stickers.push({ value: secondPart, reason: `${req.reason} (이월)`, date: req.date, from: req.from });
+        board.stickers.push({ 
+          value: secondPart, 
+          reason: `${req.reason} (이월)`, 
+          date: req.date, 
+          from: req.isRequest ? currentUserId : req.from,
+          isRequest: true 
+        });
       }
       alert('🎉 포도판 완성! 보관함에 이관되고 새 판이 생성되었습니다.');
     }
@@ -855,7 +934,10 @@
         </div>
         <div class="archive-body" id="archive-body-${index}">
           <ul style="padding-left:16px; margin-top:4px;">` + 
-          item.stickers.map(s => `<li style="font-size:0.78rem; color:#666; margin-bottom:3px;">[${s.date}] ${s.reason} (${s.value}개)</li>`).join('') + `</ul>
+          item.stickers.map(s => {
+            const reqLabel = s.isRequest ? ' <span style="color:#ff6b81; font-weight:600;">[요청]</span>' : '';
+            return `<li style="font-size:0.78rem; color:#666; margin-bottom:3px;">[${s.date}] ${s.reason} (${s.value}개)${reqLabel}</li>`;
+          }).join('') + `</ul>
         </div>
       `;
       listDiv.appendChild(card);
@@ -874,7 +956,6 @@
     }
   }
 
-  // 보관함에서 포도판 열기 (수정 모드)
   function openArchiveEdit(userId, index) {
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
@@ -910,7 +991,6 @@
         if (filledType) {
           grape.classList.add(filledType, item.type);
           grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          // 포도알 클릭 시 보관된 스티커 수정/삭제 모달 오픈
           grape.onclick = () => openArchiveItemModal(itemData, index);
         } else {
           grape.innerText = grapeIndex + 1;
@@ -929,27 +1009,24 @@
     openArchiveModal();
   }
 
-  // 보관된 판 내부의 개별 스티커 수정/삭제 모달 열기
   function openArchiveItemModal(item, archiveIndex) {
     currentEditingArchiveSticker = item;
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
-    const isLatest = (index === archive.length - 1); // 가장 최근 완성된 직전 판인지 확인
+    const isLatest = (index === archive.length - 1);
 
-    document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}`;
+    document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}${item.isRequest ? ' [요청]' : ''}`;
     document.getElementById('archiveItemReasonInput').value = item.reason;
     document.getElementById('archiveItemValText').innerText = `${item.value}개`;
 
     const btnsDiv = document.getElementById('archiveItemModalBtns');
     if (isLatest) {
-      // 직전 판일 때만 수정 + 삭제 버튼 모두 제공
       btnsDiv.innerHTML = `
         <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
         <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
         <button class="save" onclick="saveArchiveItemEdit()">저장</button>
       `;
     } else {
-      // 그 이전 판들은 수정만 가능 (삭제 버튼 없음)
       btnsDiv.innerHTML = `
         <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
         <button class="save" onclick="saveArchiveItemEdit()">저장</button>
@@ -963,7 +1040,6 @@
     document.getElementById('archiveItemModal').classList.remove('active');
   }
 
-  // 보관된 스티커 사유 수정 저장
   async function saveArchiveItemEdit() {
     const newReason = document.getElementById('archiveItemReasonInput').value.trim();
     if (!newReason) { alert('사유를 입력해주세요!'); return; }
@@ -972,12 +1048,10 @@
     await saveCloudData();
 
     closeArchiveItemModal();
-    // 포도판 모달을 갱신하기 위해 다시 오픈
     openArchiveEdit(editingArchiveTarget.userId, editingArchiveTarget.index);
     alert('수정되었습니다!');
   }
 
-  // 직전 판의 보관된 스티커 삭제 (삭제 시 미완성 판이 되어 현재 진행 중인 판으로 복구됨)
   async function deleteArchiveItem() {
     if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 이 판이 미완성 상태가 되어 현재 진행 중인 판으로 되돌아갑니다!)')) return;
 
@@ -988,7 +1062,6 @@
     const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveSticker);
     if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
 
-    // 보관함에서 해당 항목 제거 후 현재 진행 중인 판에 합치기
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
     
