@@ -729,7 +729,7 @@
 
   function openInboxModal() {
     const inboxList = document.getElementById('inboxList');
-    // CRITICAL FIX: Ensure only 'pending' requests are displayed in the inbox modal
+    // CRITICAL: Filter explicitly so only requests with status 'pending' are shown
     const myRequests = (appState.requests || []).filter(r => r.to === currentUserId && r.status === 'pending');
 
     if (myRequests.length === 0) {
@@ -762,7 +762,7 @@
     const req = (appState.requests || []).find(r => r.id === reqId);
     if (!req) return;
 
-    // Mark as accepted immediately so it won't appear in pending lists anymore
+    // CRITICAL FIX: Mark status as 'accepted' immediately so it never shows up as pending again
     req.status = 'accepted';
 
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
@@ -818,6 +818,7 @@
       alert('🎉 포도판 완성! 보관함에 이관되고 새 판이 생성되었습니다.');
     }
 
+    // CRITICAL FIX: Await cloud save before UI update
     await saveCloudData();
     renderAll();
     openInboxModal();
@@ -826,7 +827,7 @@
   async function rejectRequest(reqId) {
     const req = (appState.requests || []).find(r => r.id === reqId);
     if (req) {
-      // Mark as rejected explicitly
+      // CRITICAL FIX: Mark status as 'rejected' explicitly
       req.status = 'rejected';
       await saveCloudData();
       renderAll();
