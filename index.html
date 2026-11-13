@@ -20,7 +20,7 @@
       --border-radius: 24px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Pretendard', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; }
+    body { background-color: var(--bg-color); color: var(--text-color); padding: 18px 12px; min-height: 100vh; overflow-y: scroll; }
     .container { max-width: 900px; margin: 0 auto; }
     
     header { display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 18px; padding: 0 4px; gap: 10px; }
@@ -39,18 +39,19 @@
     .auth-btn { width: 100%; padding: 12px; background: var(--pink-main); color: white; border: none; border-radius: 14px; font-weight: 700; font-size: 0.95rem; cursor: pointer; margin-bottom: 8px; }
     .auth-switch { font-size: 0.8rem; color: #666; cursor: pointer; margin-top: 10px; display: inline-block; }
 
-    /* 모든 브라우저에서 흔들림 없는 완벽한 고정 레이아웃 (테이블/플렉스 혼용 방지) */
-    .dual-board { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+    /* 모든 브라우저 및 모바일 기기(사파리 포함)에서 흔들림을 완벽 차단하는 Flex 고정 배열 */
+    .dual-board { display: flex; flex-direction: column; gap: 16px; width: 100%; transform: translateZ(0); }
     @media (min-width: 768px) {
-      .dual-board { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
+      .dual-board { display: flex; flex-direction: row; align-items: flex-start; }
+      .user-card { flex: 1; }
     }
 
-    .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 18px 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); width: 100%; min-width: 0; }
-    .user-card-header { display: flex; justify-content: space-between; align-items: center; }
+    .user-card { background: var(--card-bg); border-radius: var(--border-radius); padding: 18px 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(255,182,193,0.1); width: 100%; min-width: 0; will-change: transform; }
+    .user-card-header { display: flex; justify-content: space-between; align-items: center; min-height: 32px; }
     .user-name { font-size: 1.15rem; font-weight: 700; color: #333; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .user-name.editable:hover { color: #ff6b81; text-decoration: underline; text-underline-offset: 4px; }
     
-    .header-action-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+    .header-action-btns { display: flex; gap: 6px; align-items: center; flex-shrink: 0; min-width: 70px; justify-content: flex-end; }
     .fold-btn { background: var(--pink-soft); border: none; padding: 5px 11px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; color: var(--pink-dark); cursor: pointer; white-space: nowrap; }
     .sticker-btn { background: var(--pink-main); color: white; border: none; padding: 5px 11px; border-radius: 12px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
     .poke-btn { background: #fff0f5; border: 1px solid var(--pink-main); padding: 5px 9px; border-radius: 12px; font-size: 0.78rem; cursor: pointer; }
