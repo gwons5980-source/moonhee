@@ -555,7 +555,7 @@
     const actionBtns = document.getElementById(`memoActionBtns-${userId}`);
 
     if (board.memo) {
-      displaySpan.innerText = `다 모으면: ${icon}${board.memo}${icon}`;
+      displaySpan.innerText = `${icon}${board.memo}${icon}`;
       if (canEdit) {
         actionBtns.innerHTML = `<div class="memo-btns" style="margin-left: 8px;"><button class="memo-edit-btn" onclick="editMemo('${userId}', '${tab}')">수정</button><button class="memo-del-btn" onclick="deleteMemo('${userId}', '${tab}')">삭제</button></div>`;
       }
