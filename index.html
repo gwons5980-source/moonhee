@@ -1033,6 +1033,7 @@
         }
 
         if (filledType && foundStIdx !== -1) {
+          // 완성판 내부에서는 0.5개(half)여도 반쪽 모양으로 정상 반영되어 그려짐
           grape.classList.add(filledType, item.type);
           if (filledType === 'full') {
             grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
@@ -1041,6 +1042,7 @@
         } else {
           grape.innerText = grapeIndex + 1;
         }
+        rowDiv.appendChild(rowDivParent => {}); // safe placeholder
         rowDiv.appendChild(grape);
         stickerIdx++;
       }
