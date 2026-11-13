@@ -62,8 +62,9 @@
     .grape-container { background: var(--pink-soft); border-radius: 20px; padding: 22px 10px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .grape-container.bad-mode { background: var(--bad-soft); }
     .grape-row { display: flex; gap: 8px; }
-    .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; position: relative; overflow: hidden; }
+    .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; position: relative; overflow: hidden; cursor: default; }
     .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
+    .grape-grape.full { cursor: pointer; }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
     .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
     .grape-grape.full.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
@@ -299,8 +300,11 @@
     await loadCloudData();
   }
 
-  // 항상 최신 클라우드 데이터를 가져오는 함수
+  // 항상 최신 클라우드 데이터를 가져오되, 현재 화면에서 선택된 탭(activeTab)은 보존합니다!
   async function fetchLatestCloudData() {
+    const currentTab1 = appState.users?.user1?.activeTab || 'like';
+    const currentTab2 = appState.users?.user2?.activeTab || 'like';
+
     const { data } = await supabaseClient.from('boards_data').select('*');
     if (data && data.length > 0) {
       const savedState = data.find(row => row.id === 'main_state');
@@ -309,6 +313,9 @@
       }
     }
     if (!appState.requests) appState.requests = [];
+
+    if (appState.users?.user1) appState.users.user1.activeTab = currentTab1;
+    if (appState.users?.user2) appState.users.user2.activeTab = currentTab2;
   }
 
   async function loadCloudData() {
@@ -593,7 +600,7 @@
 
     selectedVal = 1;
 
-    document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 💔';
+    document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 요청 💔';
     document.getElementById('stickerReason').value = '';
 
     const btn05 = document.getElementById('val-05');
@@ -620,7 +627,6 @@
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
 
-    // CRITICAL: 스티커를 주거나 요청을 보내기 직전에도 무조건 최신 클라우드 데이터를 불러와 동기화합니다!
     await fetchLatestCloudData();
 
     const today = new Date().toISOString().split('T')[0];
@@ -987,6 +993,7 @@
         } else {
           grape.innerText = grapeIndex + 1;
         }
+        rowDiv.appendChild(rowDiv);
         rowDiv.appendChild(grape);
         stickerIdx++;
       }
