@@ -299,11 +299,8 @@
     await loadCloudData();
   }
 
-  async function loadCloudData() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    if (!user) return;
-    const email = user.email;
-
+  // 최신 클라우드 데이터를 안전하게 불러오는 함수 (동기화 핵심)
+  async function fetchLatestCloudData() {
     const { data } = await supabaseClient.from('boards_data').select('*');
     if (data && data.length > 0) {
       const savedState = data.find(row => row.id === 'main_state');
@@ -311,11 +308,15 @@
         appState = { ...appState, ...savedState.data };
       }
     }
-
     if (!appState.requests) appState.requests = [];
-    
-    // CRITICAL: Filter out any corrupted or old completed requests that somehow lost their status, keeping only true pending ones or properly cleaning up
-    appState.requests = appState.requests.filter(r => r && r.status === 'pending');
+  }
+
+  async function loadCloudData() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const email = user.email;
+
+    await fetchLatestCloudData();
     
     ['user1', 'user2'].forEach(u => {
       if (!appState.boards[u]) appState.boards[u] = {};
@@ -343,11 +344,6 @@
   }
 
   async function saveCloudData() {
-    // CRITICAL: Clean requests list before saving to cloud so accepted/rejected ones are completely purged from storage
-    if (appState.requests) {
-      appState.requests = appState.requests.filter(r => r && r.status === 'pending');
-    }
-
     await supabaseClient.from('boards_data').upsert({
       id: 'main_state',
       data: appState,
@@ -371,7 +367,7 @@
 
   function updateRequestBadge() {
     const badge = document.getElementById('reqBadge');
-    const pending = (appState.requests || []).filter(r => r.to === currentUserId && r.status === 'pending');
+    const pending = (appState.requests || []).filter(r => r && r.to === currentUserId);
     if (pending.length > 0) {
       badge.style.display = 'flex';
       badge.innerText = pending.length;
@@ -437,6 +433,7 @@
     const currentName = appState.users[userId].name;
     const newName = prompt('사용하실 이름을 입력해주세요:', currentName);
     if (newName && newName.trim() !== '') {
+      await fetchLatestCloudData(); // 최신 상태 동기화
       appState.users[userId].name = newName.trim();
       await saveCloudData();
       renderAll();
@@ -532,7 +529,8 @@
     }
   }
 
-  function editMemo(userId, tab) {
+  async function editMemo(userId, tab) {
+    await fetchLatestCloudData(); // 동기화
     const board = appState.boards[userId][tab];
     document.getElementById(`memoSection-${userId}`).innerHTML = `
       <textarea class="memo-textarea" id="memoInput-${userId}" placeholder="내용을 입력하세요">${board.memo || ''}</textarea>
@@ -541,6 +539,7 @@
   }
 
   async function saveMemo(userId, tab) {
+    await fetchLatestCloudData();
     appState.boards[userId][tab].memo = document.getElementById(`memoInput-${userId}`).value.trim();
     await saveCloudData();
     renderAll();
@@ -548,6 +547,7 @@
 
   async function deleteMemo(userId, tab) {
     if (!confirm('내용을 삭제하시겠습니까?')) return;
+    await fetchLatestCloudData();
     appState.boards[userId][tab].memo = '';
     await saveCloudData();
     renderAll();
@@ -558,7 +558,8 @@
     renderAll();
   }
 
-  function openRequestModal() {
+  async function openRequestModal() {
+    await fetchLatestCloudData(); // 최신 동기화
     isRequestMode = true;
     selectedTargetUser = (currentUserId === 'user1' ? 'user2' : 'user1');
     
@@ -580,7 +581,8 @@
     document.getElementById('addModal').classList.add('active');
   }
 
-  function openStickerModal(targetUserId) {
+  async function openStickerModal(targetUserId) {
+    await fetchLatestCloudData(); // 최신 동기화
     isRequestMode = false;
     selectedTargetUser = targetUserId;
     const tab = appState.users[targetUserId].activeTab;
@@ -618,6 +620,9 @@
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
 
+    // 작업 직전 최신 데이터로 동기화하여 덮어쓰기 충돌 방지
+    await fetchLatestCloudData();
+
     const today = new Date().toISOString().split('T')[0];
 
     if (isRequestMode) {
@@ -630,12 +635,11 @@
         value: selectedVal,
         reason: reason,
         date: today,
-        status: 'pending',
         isRequest: true
       });
 
       await saveCloudData();
-      updateRequestBadge();
+      renderAll();
       alert('상대방에게 좋아요 스티커 요청을 보냈습니다! 상대방이 승낙하면 내 판에 채워져요.');
       closeAddModal();
       return;
@@ -696,20 +700,20 @@
         type: 'bad',
         value: selectedVal,
         reason: reason,
-        date: today,
-        status: 'pending'
+        date: today
       });
 
       await saveCloudData();
-      updateRequestBadge();
+      renderAll();
       alert('상대방에게 나빠요 스티커 요청을 보냈습니다! 상대방이 승낙해야 반영돼요.');
     }
 
     closeAddModal();
   }
 
-  function showStickerDetail(targetUserId, item, tab) {
+  async function showStickerDetail(targetUserId, item, tab) {
     if (!item) return;
+    await fetchLatestCloudData();
     currentActiveItem = item; currentActiveTargetUser = targetUserId; currentActiveTab = tab;
     let reqMark = item.isRequest ? ' <span style="color:#ff6b81; font-weight:bold;">[요청]</span>' : '';
     document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보${reqMark}`;
@@ -724,6 +728,7 @@
 
   async function deleteSticker() {
     if (!confirm('정말 이 스티커를 삭제하시겠습니까?')) return;
+    await fetchLatestCloudData();
     const board = appState.boards[currentActiveTargetUser][currentActiveTab];
     const idx = board.stickers.indexOf(currentActiveItem);
     if (idx > -1) board.stickers.splice(idx, 1);
@@ -735,9 +740,10 @@
 
   function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
 
-  function openInboxModal() {
+  async function openInboxModal() {
+    await fetchLatestCloudData(); // 최신 요청 목록 불러오기
     const inboxList = document.getElementById('inboxList');
-    const myRequests = (appState.requests || []).filter(r => r && r.to === currentUserId && r.status === 'pending');
+    const myRequests = (appState.requests || []).filter(r => r && r.to === currentUserId);
 
     if (myRequests.length === 0) {
       inboxList.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.85rem;">받은 대기 중인 요청이 없습니다.</p>`;
@@ -766,10 +772,13 @@
   function closeInboxModal() { document.getElementById('inboxModal').classList.remove('active'); }
 
   async function acceptRequest(reqId) {
-    const req = (appState.requests || []).find(r => r && r.id === reqId);
-    if (!req) return;
+    // 수락 직전 최신 데이터 동기화
+    await fetchLatestCloudData();
 
-    // Remove the accepted request completely from appState.requests array so it never persists as pending
+    const req = (appState.requests || []).find(r => r && r.id === reqId);
+    if (!req) { alert('이미 처리되었거나 존재하지 않는 요청입니다.'); closeInboxModal(); renderAll(); return; }
+
+    // 요청 목록에서 확실하게 제거
     appState.requests = appState.requests.filter(r => r && r.id !== reqId);
 
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
@@ -831,17 +840,19 @@
   }
 
   async function rejectRequest(reqId) {
-    // Remove the rejected request completely from appState.requests array
+    // 거절 직전 최신 데이터 동기화
+    await fetchLatestCloudData();
+
     appState.requests = (appState.requests || []).filter(r => r && r.id !== reqId);
     
     await saveCloudData();
     renderAll();
     openInboxModal();
-    updateRequestBadge();
   }
 
   let isEditingTerms = false;
-  function openTermsModal() {
+  async function openTermsModal() {
+    await fetchLatestCloudData();
     isEditingTerms = false;
     renderTermsModal();
     document.getElementById('termsModal').classList.add('active');
@@ -867,6 +878,7 @@
     }
   }
   async function saveTerms() {
+    await fetchLatestCloudData();
     const raw = document.getElementById('termsEditInput').value.trim();
     appState.terms = raw ? raw.split('\n').map(s => s.trim()).filter(Boolean) : [];
     await saveCloudData();
@@ -874,7 +886,8 @@
     renderTermsModal();
   }
 
-  function openArchiveModal() {
+  async function openArchiveModal() {
+    await fetchLatestCloudData();
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
     const btn1 = document.getElementById('filter-user1');
     const btn2 = document.getElementById('filter-user2');
@@ -937,7 +950,8 @@
     }
   }
 
-  function openArchiveEdit(userId, index) {
+  async function openArchiveEdit(userId, index) {
+    await fetchLatestCloudData();
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
 
@@ -1022,6 +1036,7 @@
   }
 
   async function saveArchiveItemEdit() {
+    await fetchLatestCloudData();
     const newReason = document.getElementById('archiveItemReasonInput').value.trim();
     if (!newReason) { alert('사유를 입력해주세요!'); return; }
 
@@ -1036,6 +1051,7 @@
   async function deleteArchiveItem() {
     if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 이 판이 미완성 상태가 되어 현재 진행 중인 판으로 되돌아갑니다!)')) return;
 
+    await fetchLatestCloudData();
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
