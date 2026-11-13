@@ -239,6 +239,7 @@
   let currentUserId = null;
   let isSignUpMode = false;
   let foldedState = { user1: false, user2: false };
+  let isInitialized = false; // 최초 렌더링 여부 체크용
 
   const smileSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 58 Q 50 82 72 58" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
   const sadSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 72 Q 50 52 72 72" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
@@ -350,9 +351,6 @@
       await saveCloudData();
     }
 
-    appState.users.user1.activeTab = 'like';
-    appState.users.user2.activeTab = 'like';
-
     renderAll();
   }
 
@@ -366,15 +364,18 @@
 
   function renderAll() {
     const container = document.getElementById('dualBoardContainer');
-    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+    
+    // 최초 1회만 카드를 생성하고, 그 이후엔 내부 내용만 갱신하여 위치 흔들림 원천 방지
+    if (!isInitialized || container.children.length !== 2) {
+      container.innerHTML = `
+        ${createCardHtml('user1')}
+        ${createCardHtml('user2')}
+      `;
+      isInitialized = true;
+    }
 
-    container.innerHTML = `
-      ${createCardHtml(currentUserId)}
-      ${createCardHtml(otherUserId)}
-    `;
-
-    renderBoardContent(currentUserId);
-    renderBoardContent(otherUserId);
+    renderBoardContent('user1');
+    renderBoardContent('user2');
     updateRequestBadge();
   }
 
@@ -438,7 +439,15 @@
 
   function toggleFold(userId) {
     foldedState[userId] = !foldedState[userId];
-    renderAll();
+    const body = document.getElementById(`body-${userId}`);
+    const foldBtn = document.querySelector(`#card-${userId} .fold-btn`);
+    if (foldedState[userId]) {
+      body.classList.add('folded');
+      foldBtn.innerText = '▼';
+    } else {
+      body.classList.remove('folded');
+      foldBtn.innerText = '▲';
+    }
   }
 
   async function editUserName(userId) {
@@ -569,7 +578,20 @@
 
   function switchBoard(userId, tab) {
     appState.users[userId].activeTab = tab;
-    renderAll();
+    renderBoardContent(userId);
+    
+    // 상대방 카드 헤더의 뽀기(👉) 버튼 상태도 실시간으로 갱신
+    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+    if (userId === otherUserId) {
+      const card = document.getElementById(`card-${otherUserId}`);
+      const headerBtns = card.querySelector('.header-action-btns');
+      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="좋아요 스티커 요청하기">👉</button>` : ``;
+      headerBtns.innerHTML = `
+        ${pokeBtnHtml}
+        <button class="sticker-btn" onclick="openStickerModal('${otherUserId}')">스티커</button>
+        <button class="fold-btn" onclick="toggleFold('${otherUserId}')">${foldedState[otherUserId] ? '▼' : '▲'}</button>
+      `;
+    }
   }
 
   async function openRequestModal() {
@@ -1105,7 +1127,7 @@
 
     await fetchLatestCloudData();
     const { userId, index } = editingArchiveTarget;
-    const targetSticker = appState.boards[userId].archive[index].stickers[currentEditingArchiveStickerIndex];
+    const targetSticker = appState.boards[userId].archive[index].stickers[currentEditingArchiveStIndex || currentEditingArchiveStickerIndex];
     if (targetSticker) {
       targetSticker.reason = newReason;
       await saveCloudData();
