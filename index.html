@@ -314,6 +314,9 @@
 
     if (!appState.requests) appState.requests = [];
     
+    // CRITICAL: Filter out any corrupted or old completed requests that somehow lost their status, keeping only true pending ones or properly cleaning up
+    appState.requests = appState.requests.filter(r => r && r.status === 'pending');
+    
     ['user1', 'user2'].forEach(u => {
       if (!appState.boards[u]) appState.boards[u] = {};
       ['like', 'bad'].forEach(t => {
@@ -340,6 +343,11 @@
   }
 
   async function saveCloudData() {
+    // CRITICAL: Clean requests list before saving to cloud so accepted/rejected ones are completely purged from storage
+    if (appState.requests) {
+      appState.requests = appState.requests.filter(r => r && r.status === 'pending');
+    }
+
     await supabaseClient.from('boards_data').upsert({
       id: 'main_state',
       data: appState,
@@ -729,8 +737,7 @@
 
   function openInboxModal() {
     const inboxList = document.getElementById('inboxList');
-    // CRITICAL: Filter explicitly so only requests with status 'pending' are shown
-    const myRequests = (appState.requests || []).filter(r => r.to === currentUserId && r.status === 'pending');
+    const myRequests = (appState.requests || []).filter(r => r && r.to === currentUserId && r.status === 'pending');
 
     if (myRequests.length === 0) {
       inboxList.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.85rem;">받은 대기 중인 요청이 없습니다.</p>`;
@@ -759,11 +766,11 @@
   function closeInboxModal() { document.getElementById('inboxModal').classList.remove('active'); }
 
   async function acceptRequest(reqId) {
-    const req = (appState.requests || []).find(r => r.id === reqId);
+    const req = (appState.requests || []).find(r => r && r.id === reqId);
     if (!req) return;
 
-    // CRITICAL FIX: Mark status as 'accepted' immediately so it never shows up as pending again
-    req.status = 'accepted';
+    // Remove the accepted request completely from appState.requests array so it never persists as pending
+    appState.requests = appState.requests.filter(r => r && r.id !== reqId);
 
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
     const reqType = req.isRequest ? 'like' : req.type;
@@ -818,22 +825,19 @@
       alert('🎉 포도판 완성! 보관함에 이관되고 새 판이 생성되었습니다.');
     }
 
-    // CRITICAL FIX: Await cloud save before UI update
     await saveCloudData();
     renderAll();
     openInboxModal();
   }
 
   async function rejectRequest(reqId) {
-    const req = (appState.requests || []).find(r => r.id === reqId);
-    if (req) {
-      // CRITICAL FIX: Mark status as 'rejected' explicitly
-      req.status = 'rejected';
-      await saveCloudData();
-      renderAll();
-      openInboxModal();
-      updateRequestBadge();
-    }
+    // Remove the rejected request completely from appState.requests array
+    appState.requests = (appState.requests || []).filter(r => r && r.id !== reqId);
+    
+    await saveCloudData();
+    renderAll();
+    openInboxModal();
+    updateRequestBadge();
   }
 
   let isEditingTerms = false;
