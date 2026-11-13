@@ -218,7 +218,7 @@
     <h3 id="archiveItemModalTitle">✏️ 보관된 스티커 수정</h3>
     <div style="margin-bottom: 10px; font-size: 0.80rem; color: #888;" id="archiveItemDate">날짜: </div>
     <textarea id="archiveItemReasonInput" placeholder="사유를 입력하세요" style="width:100%; height:80px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-bottom:10px; font-size:0.85rem; outline:none;"></textarea>
-    <div style="margin-bottom: 14px; font-size: 0.85rem; font-weight: 600; color: #555;">개수: <span id="archiveItemValText">1개</span></div>
+    <div style="display:none;" id="archiveItemValText">1개</div>
     <div class="modal-btns" id="archiveItemModalBtns">
       <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
       <button class="save" onclick="saveArchiveItemEdit()">저장</button>
@@ -706,16 +706,16 @@
     currentActiveTargetUser = targetUserId;
     currentActiveTab = tab;
 
-    let reqMark = item.isRequest ? ' <span style="color:#ff6b81; font-weight:bold;">[요청]</span>' : '';
-    document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보${reqMark}`;
+    let boardName = tab === 'like' ? '좋아요' : '나빠요';
+    let reqMark = item.isRequest ? ' (요청)' : '';
+    document.getElementById('detailTitle').innerText = `${boardName} 스티커 정보${reqMark}`;
     
     const isAuthor = (item.from === currentUserId);
     const btnsDiv = document.getElementById('detailModalBtns');
 
     if (isAuthor) {
       document.getElementById('detailContentBody').innerHTML = `
-        <b>날짜:</b> ${item.date}<br>
-        <b>스티커:</b> ${item.value}개<br><br>
+        <b>날짜:</b> ${item.date}<br><br>
         <b>📝 사유 수정:</b><br>
         <textarea id="editStickerReasonInput" style="width:100%; height:75px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-top:6px; font-size:0.85rem; outline:none;">${item.reason}</textarea>
       `;
@@ -725,7 +725,7 @@
         <button class="save" onclick="saveStickerReasonEdit()">저장</button>
       `;
     } else {
-      document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
+      document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><br><b>📝 사유:</b><br>${item.reason}`;
       btnsDiv.innerHTML = `<button class="cancel" onclick="closeDetailModal()">닫기</button>`;
     }
 
@@ -777,7 +777,7 @@
         card.className = `request-card ${req.type}`;
         card.innerHTML = `
           <div style="font-weight:700; font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
-            <span>${fromName}님의 ${req.isRequest ? '👉 [좋아요 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')} (${req.value}개)</span>
+            <span>${fromName}님의 ${req.isRequest ? '👉 [좋아요 요청]' : (req.type === 'like' ? '💖 좋아요' : '💔 나빠요')}</span>
             <span style="font-size:0.75rem; color:#888;">${req.date}</span>
           </div>
           <p style="font-size:0.83rem; color:#555; margin-bottom:10px; word-break:break-all;">"${req.reason}"</p>
@@ -952,7 +952,7 @@
           <ul style="padding-left:16px; margin-top:4px;">` + 
           item.stickers.map(s => {
             const reqLabel = s.isRequest ? ' <span style="color:#ff6b81; font-weight:600;">[요청]</span>' : '';
-            return `<li style="font-size:0.78rem; color:#666; margin-bottom:3px;">[${s.date}] ${s.reason} (${s.value}개)${reqLabel}</li>`;
+            return `<li style="font-size:0.78rem; color:#666; margin-bottom:3px;">[${s.date}] ${s.reason}${reqLabel}</li>`;
           }).join('') + `</ul>
         </div>
       `;
@@ -1037,7 +1037,6 @@
 
     document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}${item.isRequest ? ' [요청]' : ''}`;
     document.getElementById('archiveItemReasonInput').value = item.reason;
-    document.getElementById('archiveItemValText').innerText = `${item.value}개`;
 
     const btnsDiv = document.getElementById('archiveItemModalBtns');
     btnsDiv.innerHTML = `
@@ -1088,13 +1087,11 @@
     let totalAvailable = archivedSum + activeSum;
 
     if (totalAvailable >= 15) {
-      // 15개가 넘으므로 현재 진행 중인 판의 첫 번째 스티커를 끌고 와서 메움
       if (activeBoard.stickers.length > 0) {
         archivedBoard.stickers.push(activeBoard.stickers.shift());
       }
       alert('완성된 판의 빈자리가 현재 진행 중인 판의 첫 번째 스티커로 채워졌습니다!');
     } else {
-      // 총 개수가 15개 미만이면 판을 해체하여 현재 판으로 되돌림
       archive.splice(index, 1);
       activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
       activeBoard.currentVol = archivedBoard.vol;
