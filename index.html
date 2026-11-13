@@ -64,10 +64,10 @@
     .grape-row { display: flex; gap: 8px; }
     .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; position: relative; overflow: hidden; cursor: default; }
     .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
-    .grape-grape.full { cursor: pointer; }
+    .grape-grape.full, .grape-grape.half { cursor: pointer; }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
-    .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
-    .grape-grape.full.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
+    .grape-grape.full.like, .grape-grape.half.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
+    .grape-grape.full.bad, .grape-grape.half.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
     .memo-section { margin-top: 16px; background: #faf8f9; border-radius: 14px; padding: 12px 14px; border: 1px dashed #e6d2d7; }
     .memo-section.bad-mode { background: #f4f6f9; border-color: #cbd5e1; }
     .memo-line { font-size: 0.85rem; font-weight: 600; color: #444; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
@@ -170,7 +170,7 @@
   </div>
 </div>
 
-<!-- 스티커 상세 모달 (현재 진행 중인 판용) -->
+<!-- 스티커 상세/수정/삭제 모달 (현재 진행 중인 판용) -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <h3 id="detailTitle">🍇 스티커 정보</h3>
@@ -262,9 +262,10 @@
     requests: []
   };
 
-  let selectedTargetUser = null, selectedVal = 1, currentActiveItem = null, currentActiveTargetUser = null, currentActiveTab = null;
+  let selectedTargetUser = null, selectedVal = 1;
+  let currentActiveStickerIndex = -1, currentActiveTargetUser = null, currentActiveTab = null;
   let editingArchiveTarget = null;
-  let currentEditingArchiveSticker = null;
+  let currentEditingArchiveStickerIndex = -1;
   let isRequestMode = false;
 
   window.onload = async function() {
@@ -300,7 +301,6 @@
     await loadCloudData();
   }
 
-  // 항상 최신 클라우드 데이터를 가져오되, 현재 화면에서 선택된 탭(activeTab)은 보존합니다!
   async function fetchLatestCloudData() {
     const currentTab1 = appState.users?.user1?.activeTab || 'like';
     const currentTab2 = appState.users?.user2?.activeTab || 'like';
@@ -486,19 +486,20 @@
         const grape = document.createElement('div');
         grape.className = 'grape-grape';
         
-        let accumulated = 0, filledType = null, itemData = null;
-        for (let item of board.stickers) {
+        let accumulated = 0, filledType = null, foundStickerIdx = -1;
+        for (let idx = 0; idx < board.stickers.length; idx++) {
+          let item = board.stickers[idx];
           accumulated += item.value;
           if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
-            itemData = item;
+            foundStickerIdx = idx;
             filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
           }
         }
 
-        if (filledType) {
+        if (filledType && foundStickerIdx !== -1) {
           grape.classList.add(filledType, tab);
           grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
-          grape.onclick = () => showStickerDetail(userId, itemData, tab);
+          grape.onclick = () => showStickerDetail(userId, foundStickerIdx, tab);
         } else {
           grape.innerText = grapeIndex + 1;
           grape.onclick = null;
@@ -717,30 +718,67 @@
     closeAddModal();
   }
 
-  async function showStickerDetail(targetUserId, item, tab) {
+  // 현재 판 스티커 상세 / 수정 / 삭제 모달 열기 (인덱스 기반으로 안전하게 찾음)
+  function showStickerDetail(targetUserId, stickerIndex, tab) {
+    const board = appState.boards[targetUserId][tab];
+    const item = board.stickers[stickerIndex];
     if (!item) return;
-    await fetchLatestCloudData();
-    currentActiveItem = item; currentActiveTargetUser = targetUserId; currentActiveTab = tab;
+
+    currentActiveStickerIndex = stickerIndex;
+    currentActiveTargetUser = targetUserId;
+    currentActiveTab = tab;
+
     let reqMark = item.isRequest ? ' <span style="color:#ff6b81; font-weight:bold;">[요청]</span>' : '';
     document.getElementById('detailTitle').innerText = `${tab === 'like' ? '좋아요' : '나빠요'} 스티커 정보${reqMark}`;
-    document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
     
+    const isAuthor = (item.from === currentUserId);
     const btnsDiv = document.getElementById('detailModalBtns');
-    btnsDiv.innerHTML = item.from === currentUserId ? 
-      `<button class="delete-btn" onclick="deleteSticker()">삭제</button><button class="cancel" onclick="closeDetailModal()">닫기</button>` : 
-      `<button class="cancel" onclick="closeDetailModal()">닫기</button>`;
+
+    if (isAuthor) {
+      document.getElementById('detailContentBody').innerHTML = `
+        <b>날짜:</b> ${item.date}<br>
+        <b>스티커:</b> ${item.value}개<br><br>
+        <b>📝 사유 수정:</b><br>
+        <textarea id="editStickerReasonInput" style="width:100%; height:75px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-top:6px; font-size:0.85rem; outline:none;">${item.reason}</textarea>
+      `;
+      btnsDiv.innerHTML = `
+        <button class="delete-btn" onclick="deleteSticker()">삭제</button>
+        <button class="cancel" onclick="closeDetailModal()">취소</button>
+        <button class="save" onclick="saveStickerReasonEdit()">저장</button>
+      `;
+    } else {
+      document.getElementById('detailContentBody').innerHTML = `<b>날짜:</b> ${item.date}<br><b>스티커:</b> ${item.value}개<br><br><b>📝 사유:</b><br>${item.reason}`;
+      btnsDiv.innerHTML = `<button class="cancel" onclick="closeDetailModal()">닫기</button>`;
+    }
+
     document.getElementById('detailModal').classList.add('active');
+  }
+
+  async function saveStickerReasonEdit() {
+    const newReason = document.getElementById('editStickerReasonInput').value.trim();
+    if (!newReason) { alert('사유를 입력해주세요!'); return; }
+
+    await fetchLatestCloudData();
+    const board = appState.boards[currentActiveTargetUser][currentActiveTab];
+    if (board.stickers[currentActiveStickerIndex]) {
+      board.stickers[currentActiveStickerIndex].reason = newReason;
+      await saveCloudData();
+      renderAll();
+      alert('사유가 수정되었습니다!');
+    }
+    closeDetailModal();
   }
 
   async function deleteSticker() {
     if (!confirm('정말 이 스티커를 삭제하시겠습니까?')) return;
     await fetchLatestCloudData();
     const board = appState.boards[currentActiveTargetUser][currentActiveTab];
-    const idx = board.stickers.indexOf(currentActiveItem);
-    if (idx > -1) board.stickers.splice(idx, 1);
-
-    await saveCloudData();
-    renderAll();
+    if (currentActiveStickerIndex > -1 && currentActiveStickerIndex < board.stickers.length) {
+      board.stickers.splice(currentActiveStickerIndex, 1);
+      await saveCloudData();
+      renderAll();
+      alert('스티커가 삭제되었습니다.');
+    }
     closeDetailModal();
   }
 
@@ -977,23 +1015,23 @@
         const grape = document.createElement('div');
         grape.className = 'grape-grape';
 
-        let accumulated = 0, filledType = null, itemData = null;
-        for (let st of item.stickers) {
+        let accumulated = 0, filledType = null, foundStIdx = -1;
+        for (let idx = 0; idx < item.stickers.length; idx++) {
+          let st = item.stickers[idx];
           accumulated += st.value;
-          if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
-            itemData = st;
+          if (accumulated - st.value < grapeIndex + 1 && accumulated > grapeIndex) {
+            foundStIdx = idx;
             filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
           }
         }
 
-        if (filledType) {
+        if (filledType && foundStIdx !== -1) {
           grape.classList.add(filledType, item.type);
           grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          grape.onclick = () => openArchiveItemModal(itemData, index);
+          grape.onclick = () => openArchiveItemModal(foundStIdx, index);
         } else {
           grape.innerText = grapeIndex + 1;
         }
-        rowDiv.appendChild(rowDiv);
         rowDiv.appendChild(grape);
         stickerIdx++;
       }
@@ -1008,10 +1046,13 @@
     openArchiveModal();
   }
 
-  function openArchiveItemModal(item, archiveIndex) {
-    currentEditingArchiveSticker = item;
+  function openArchiveItemModal(stickerIdx, archiveIndex) {
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
+    const item = archive[index].stickers[stickerIdx];
+    if (!item) return;
+
+    currentEditingArchiveStickerIndex = stickerIdx;
     const isLatest = (index === archive.length - 1);
 
     document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}${item.isRequest ? ' [요청]' : ''}`;
@@ -1040,12 +1081,16 @@
   }
 
   async function saveArchiveItemEdit() {
-    await fetchLatestCloudData();
     const newReason = document.getElementById('archiveItemReasonInput').value.trim();
     if (!newReason) { alert('사유를 입력해주세요!'); return; }
 
-    currentEditingArchiveSticker.reason = newReason;
-    await saveCloudData();
+    await fetchLatestCloudData();
+    const { userId, index } = editingArchiveTarget;
+    const targetSticker = appState.boards[userId].archive[index].stickers[currentEditingArchiveStickerIndex];
+    if (targetSticker) {
+      targetSticker.reason = newReason;
+      await saveCloudData();
+    }
 
     closeArchiveItemModal();
     openArchiveEdit(editingArchiveTarget.userId, editingArchiveTarget.index);
@@ -1060,8 +1105,9 @@
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    const sIdx = archivedBoard.stickers.indexOf(currentEditingArchiveSticker);
-    if (sIdx > -1) archivedBoard.stickers.splice(sIdx, 1);
+    if (currentEditingArchiveStickerIndex > -1 && currentEditingArchiveStickerIndex < archivedBoard.stickers.length) {
+      archivedBoard.stickers.splice(currentEditingArchiveStickerIndex, 1);
+    }
 
     archive.splice(index, 1);
     const activeTab = archivedBoard.type;
