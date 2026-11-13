@@ -956,6 +956,7 @@
     document.getElementById('filter-user2').className = userId === otherUserId ? 'selected' : '';
 
     const listDiv = document.getElementById('archiveList');
+    if (!appState.boards[userId]) appState.boards[userId] = {};
     if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
     const archive = appState.boards[userId].archive;
 
@@ -967,13 +968,13 @@
       card.className = 'archive-card';
       card.innerHTML = `
         <div class="archive-card-header">
-          <span onclick="toggleArchiveBody(${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
+          <span onclick="toggleArchiveBody('${userId}', ${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
           <div style="display:flex; gap:6px; align-items:center;">
             <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="포도판 형태로 수정">✏️</button>
-            <span onclick="toggleArchiveBody(${index})" style="font-size:0.85rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${index}">▼</span>
+            <span onclick="toggleArchiveBody('${userId}', ${index})" style="font-size:0.85rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${userId}-${index}">▼</span>
           </div>
         </div>
-        <div class="archive-body" id="archive-body-${index}">
+        <div class="archive-body" id="archive-body-${userId}-${index}">
           <ul style="padding-left:16px; margin-top:4px;">` + 
           item.stickers.map(s => {
             const reqLabel = s.isRequest ? ' <span style="color:#ff6b81; font-weight:600;">[요청]</span>' : '';
@@ -985,9 +986,9 @@
     });
   }
 
-  function toggleArchiveBody(index) {
-    const body = document.getElementById(`archive-body-${index}`);
-    const toggleText = document.getElementById(`archive-toggle-text-${index}`);
+  function toggleArchiveBody(userId, index) {
+    const body = document.getElementById(`archive-body-${userId}-${index}`);
+    const toggleText = document.getElementById(`archive-toggle-text-${userId}-${index}`);
     if (body.classList.contains('open')) {
       body.classList.remove('open');
       toggleText.innerText = '▼';
@@ -1067,7 +1068,6 @@
     document.getElementById('archiveItemValText').innerText = `${item.value}개`;
 
     const btnsDiv = document.getElementById('archiveItemModalBtns');
-    // 완성된 판 안에서의 스티커 삭제는 항상 허용됨 (남은 총량에 따라 자동 처리됨)
     btnsDiv.innerHTML = `
       <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
       <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
@@ -1106,23 +1106,19 @@
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    // 삭제할 스티커의 가치 (1 또는 0.5)
     const deletedSticker = archivedBoard.stickers[currentEditingArchiveStickerIndex];
     const deletedVal = deletedSticker.value;
 
-    // 해당 스티커 제거
     archivedBoard.stickers.splice(currentEditingArchiveStickerIndex, 1);
 
     const activeTab = archivedBoard.type;
     const activeBoard = appState.boards[userId][activeTab];
 
-    // 현재 총 남은 스티커 가치 계산 (완성판 남은 것 + 현재 판에 있는 것들)
     let archivedSum = archivedBoard.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let activeSum = activeBoard.stickers.reduce((acc, cur) => acc + cur.value, 0);
     let totalAvailable = archivedSum + activeSum;
 
     if (totalAvailable >= 15) {
-      // 여전히 15개가 넘으므로, 현재 판의 맨 앞에서부터 부족한 만큼(deletedVal) 끌어와서 채움
       let needed = deletedVal;
       while (needed > 0 && activeBoard.stickers.length > 0) {
         const firstActive = activeBoard.stickers[0];
@@ -1130,7 +1126,6 @@
           archivedBoard.stickers.push(activeBoard.stickers.shift());
           needed -= firstActive.value;
         } else {
-          // active의 첫 번째 스티커가 더 크면 쪼개서 가져옴
           archivedBoard.stickers.push({ ...firstActive, value: needed });
           firstActive.value -= needed;
           needed = 0;
@@ -1138,7 +1133,6 @@
       }
       alert('완성된 판의 빈자리가 현재 진행 중인 판의 첫 번째 스티커로 채워졌습니다!');
     } else {
-      // 총 개수가 15개 미만으로 떨어지면 기존처럼 이 판을 해체해서 현재 판으로 되돌림
       archive.splice(index, 1);
       activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
       activeBoard.currentVol = archivedBoard.vol;
@@ -1149,6 +1143,7 @@
     closeArchiveItemModal();
     closeArchiveEditModal();
     closeArchiveModal();
+    openArchiveModal();
     renderAll();
   }
 </script>
