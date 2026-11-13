@@ -100,8 +100,10 @@
     .request-card.bad { background: var(--bad-soft); border-color: var(--bad-border); }
     
     .archive-card { background: var(--pink-soft); border-radius: 14px; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); }
+    .archive-card.bad { background: var(--bad-soft); border-color: var(--bad-border); }
     .archive-card-header { font-weight: 700; color: #4a4a4a; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; cursor: pointer; }
     .archive-body { margin-top: 8px; padding-top: 8px; border-top: 1px dashed #ffd1dc; display: none; }
+    .archive-card.bad .archive-body { border-top-color: var(--bad-border); }
     .archive-body.open { display: block; }
   </style>
 </head>
@@ -184,10 +186,14 @@
   <div class="modal">
     <h3>📜 포도판 보관함</h3>
     <div class="modal-options" style="margin: 10px 0;">
-      <button id="filter-user1" class="selected" onclick="filterArchive('user1')">사용자 1</button>
-      <button id="filter-user2" onclick="filterArchive('user2')">사용자 2</button>
+      <button id="filter-user1" class="selected" onclick="setArchiveUser('user1')">사용자 1</button>
+      <button id="filter-user2" onclick="setArchiveUser('user2')">사용자 2</button>
     </div>
-    <div id="archiveList" style="max-height: 300px; overflow-y: auto;"></div>
+    <div class="modal-options" style="margin-bottom: 12px;">
+      <button id="filter-like" class="selected" onclick="setArchiveTab('like')">💖 좋아요</button>
+      <button id="filter-bad" onclick="setArchiveTab('bad')">💔 나빠요</button>
+    </div>
+    <div id="archiveList" style="max-height: 260px; overflow-y: auto;"></div>
     <div class="modal-btns" style="margin-top: 12px;">
       <button class="cancel" onclick="closeArchiveModal()">닫기</button>
     </div>
@@ -265,6 +271,10 @@
   let editingArchiveTarget = null;
   let currentEditingArchiveStickerIndex = -1;
   let isRequestMode = false;
+
+  // 보관함 필터 상태 관리용 변수
+  let currentArchiveUser = 'user1';
+  let currentArchiveTab = 'like';
 
   window.onload = async function() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -910,45 +920,75 @@
   async function openArchiveModal() {
     await fetchLatestCloudData();
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
+    
     const btn1 = document.getElementById('filter-user1');
     const btn2 = document.getElementById('filter-user2');
-
     btn1.innerText = appState.users[currentUserId].name;
-    btn1.onclick = () => filterArchive(currentUserId);
-
+    btn1.onclick = () => setArchiveUser(currentUserId);
     btn2.innerText = appState.users[otherUserId].name;
-    btn2.onclick = () => filterArchive(otherUserId);
+    btn2.onclick = () => setArchiveUser(otherUserId);
 
-    filterArchive(currentUserId);
+    currentArchiveUser = currentUserId;
+    currentArchiveTab = 'like';
+
+    updateArchiveFilterUI();
+    filterArchive();
     document.getElementById('archiveModal').classList.add('active');
   }
+
   function closeArchiveModal() { document.getElementById('archiveModal').classList.remove('active'); }
 
-  function filterArchive(userId) {
+  function setArchiveUser(userId) {
+    currentArchiveUser = userId;
+    updateArchiveFilterUI();
+    filterArchive();
+  }
+
+  function setArchiveTab(tab) {
+    currentArchiveTab = tab;
+    updateArchiveFilterUI();
+    filterArchive();
+  }
+
+  function updateArchiveFilterUI() {
     const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
-    document.getElementById('filter-user1').className = userId === currentUserId ? 'selected' : '';
-    document.getElementById('filter-user2').className = userId === otherUserId ? 'selected' : '';
+    document.getElementById('filter-user1').className = currentArchiveUser === currentUserId ? 'selected' : '';
+    document.getElementById('filter-user2').className = currentArchiveUser === otherUserId ? 'selected' : '';
 
+    document.getElementById('filter-like').className = currentArchiveTab === 'like' ? 'selected' : '';
+    document.getElementById('filter-bad').className = currentArchiveTab === 'bad' ? 'selected' : '';
+  }
+
+  function filterArchive() {
     const listDiv = document.getElementById('archiveList');
-    if (!appState.boards[userId]) appState.boards[userId] = {};
-    if (!appState.boards[userId].archive) appState.boards[userId].archive = [];
-    const archive = appState.boards[userId].archive;
+    if (!appState.boards[currentArchiveUser]) appState.boards[currentArchiveUser] = {};
+    if (!appState.boards[currentArchiveUser].archive) appState.boards[currentArchiveUser].archive = [];
+    
+    // 현재 선택된 탭(like 또는 bad)에 해당하는 보관된 판만 필터링
+    const archive = appState.boards[currentArchiveUser].archive.filter(item => item.type === currentArchiveTab);
 
-    if (archive.length === 0) { listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">아직 완성된 포도판이 없습니다.</p>`; return; }
+    if (archive.length === 0) {
+      listDiv.innerHTML = `<p style="text-align:center; padding:20px; color:#aaa; font-size:0.8rem;">조건에 맞는 완성된 포도판이 없습니다.</p>`; 
+      return; 
+    }
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
+      // 실제 원본 archive 배열에서의 정확한 인덱스 찾기
+      const realIndex = appState.boards[currentArchiveUser].archive.indexOf(item);
+      const isBad = (item.type === 'bad');
+
       const card = document.createElement('div');
-      card.className = 'archive-card';
+      card.className = `archive-card ${isBad ? 'bad' : ''}`;
       card.innerHTML = `
         <div class="archive-card-header">
-          <span onclick="toggleArchiveBody('${userId}', ${index})" style="flex:1;">${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
+          <span onclick="toggleArchiveBody('${currentArchiveUser}', ${realIndex})" style="flex:1;">${isBad ? '나빠요' : '좋아요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
           <div style="display:flex; gap:6px; align-items:center;">
-            <button class="small-edit-btn" onclick="openArchiveEdit('${userId}', ${index})" title="포도판 형태로 수정">✏️</button>
-            <span onclick="toggleArchiveBody('${userId}', ${index})" style="font-size:0.85rem; color:#ff8da1; font-weight:600; cursor:pointer;" id="archive-toggle-text-${userId}-${index}">▼</span>
+            <button class="small-edit-btn" onclick="openArchiveEdit('${currentArchiveUser}', ${realIndex})" title="포도판 형태로 수정">✏️</button>
+            <span onclick="toggleArchiveBody('${currentArchiveUser}', ${realIndex})" style="font-size:0.85rem; color:${isBad ? '#5b7bb2' : '#ff8da1'}; font-weight:600; cursor:pointer;" id="archive-toggle-text-${currentArchiveUser}-${realIndex}">▼</span>
           </div>
         </div>
-        <div class="archive-body" id="archive-body-${userId}-${index}">
+        <div class="archive-body" id="archive-body-${currentArchiveUser}-${realIndex}">
           <ul style="padding-left:16px; margin-top:4px;">` + 
           item.stickers.map(s => {
             const reqLabel = s.isRequest ? ' <span style="color:#ff6b81; font-weight:600;">[요청]</span>' : '';
