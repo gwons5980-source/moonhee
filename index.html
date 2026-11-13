@@ -223,11 +223,10 @@
   <div class="modal">
     <h3 id="archiveItemModalTitle">✏️ 보관된 스티커 수정</h3>
     <div style="margin-bottom: 10px; font-size: 0.80rem; color: #888;" id="archiveItemDate">날짜: </div>
-    <textarea id="archiveItemReasonInput" placeholder="사유를 입력하세요" style="width:100%; height:80px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-bottom:10px; font-size:0.85rem; outline:none;"></textarea>
+    <div id="archiveItemContentBody"></div>
     <div style="display:none;" id="archiveItemValText">1개</div>
     <div class="modal-btns" id="archiveItemModalBtns">
-      <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
-      <button class="save" onclick="saveArchiveItemEdit()">저장</button>
+      <button class="cancel" onclick="closeArchiveItemModal()">닫기</button>
     </div>
   </div>
 </div>
@@ -272,7 +271,6 @@
   let currentEditingArchiveStickerIndex = -1;
   let isRequestMode = false;
 
-  // 보관함 필터 상태 관리용 변수
   let currentArchiveUser = 'user1';
   let currentArchiveTab = 'like';
 
@@ -964,7 +962,6 @@
     if (!appState.boards[currentArchiveUser]) appState.boards[currentArchiveUser] = {};
     if (!appState.boards[currentArchiveUser].archive) appState.boards[currentArchiveUser].archive = [];
     
-    // 현재 선택된 탭(like 또는 bad)에 해당하는 보관된 판만 필터링
     const archive = appState.boards[currentArchiveUser].archive.filter(item => item.type === currentArchiveTab);
 
     if (archive.length === 0) {
@@ -974,7 +971,6 @@
 
     listDiv.innerHTML = '';
     archive.forEach((item, index) => {
-      // 실제 원본 archive 배열에서의 정확한 인덱스 찾기
       const realIndex = appState.boards[currentArchiveUser].archive.indexOf(item);
       const isBad = (item.type === 'bad');
 
@@ -984,7 +980,7 @@
         <div class="archive-card-header">
           <span onclick="toggleArchiveBody('${currentArchiveUser}', ${realIndex})" style="flex:1;">${isBad ? '나빠요' : '좋아요'} Vol. ${item.vol} (완성: ${item.completedDate})</span>
           <div style="display:flex; gap:6px; align-items:center;">
-            <button class="small-edit-btn" onclick="openArchiveEdit('${currentArchiveUser}', ${realIndex})" title="포도판 형태로 수정">✏️</button>
+            <button class="small-edit-btn" onclick="openArchiveEdit('${currentArchiveUser}', ${realIndex})" title="포도판 형태 보기">✏️</button>
             <span onclick="toggleArchiveBody('${currentArchiveUser}', ${realIndex})" style="font-size:0.85rem; color:${isBad ? '#5b7bb2' : '#ff8da1'}; font-weight:600; cursor:pointer;" id="archive-toggle-text-${currentArchiveUser}-${realIndex}">▼</span>
           </div>
         </div>
@@ -1017,7 +1013,7 @@
     editingArchiveTarget = { userId, index };
     const item = appState.boards[userId].archive[index];
 
-    document.getElementById('archiveEditTitle').innerText = `✏️ ${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} 수정`;
+    document.getElementById('archiveEditTitle').innerText = `✏️ ${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol} 판`;
     document.getElementById('archiveEditVol').innerText = `${item.type === 'like' ? '좋아요' : '나빠요'} Vol. ${item.vol}`;
     document.getElementById('archiveEditCount').innerText = `${item.stickers.reduce((a,c)=>a+c.value,0)} / 15개`;
 
@@ -1076,14 +1072,25 @@
     currentEditingArchiveStickerIndex = stickerIdx;
 
     document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}${item.isRequest ? ' [요청]' : ''}`;
-    document.getElementById('archiveItemReasonInput').value = item.reason;
-
+    
+    const isAuthor = (item.from === currentUserId);
+    const contentBody = document.getElementById('archiveItemContentBody');
     const btnsDiv = document.getElementById('archiveItemModalBtns');
-    btnsDiv.innerHTML = `
-      <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
-      <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
-      <button class="save" onclick="saveArchiveItemEdit()">저장</button>
-    `;
+
+    if (isAuthor) {
+      contentBody.innerHTML = `
+        <b>📝 사유 수정:</b><br>
+        <textarea id="archiveItemReasonInput" style="width:100%; height:75px; padding:10px; border:1px solid var(--border-color); border-radius:12px; resize:none; margin-top:6px; font-size:0.85rem; outline:none;">${item.reason}</textarea>
+      `;
+      btnsDiv.innerHTML = `
+        <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
+        <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
+        <button class="save" onclick="saveArchiveItemEdit()">저장</button>
+      `;
+    } else {
+      contentBody.innerHTML = `<b>📝 사유:</b><br>${item.reason}`;
+      btnsDiv.innerHTML = `<button class="cancel" onclick="closeArchiveItemModal()">닫기</button>`;
+    }
 
     document.getElementById('archiveItemModal').classList.add('active');
   }
