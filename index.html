@@ -299,7 +299,7 @@
     await loadCloudData();
   }
 
-  // 최신 클라우드 데이터를 안전하게 불러오는 함수 (동기화 핵심)
+  // 항상 최신 클라우드 데이터를 가져오는 함수
   async function fetchLatestCloudData() {
     const { data } = await supabaseClient.from('boards_data').select('*');
     if (data && data.length > 0) {
@@ -430,10 +430,10 @@
 
   async function editUserName(userId) {
     if (currentUserId !== userId) return;
+    await fetchLatestCloudData();
     const currentName = appState.users[userId].name;
     const newName = prompt('사용하실 이름을 입력해주세요:', currentName);
     if (newName && newName.trim() !== '') {
-      await fetchLatestCloudData(); // 최신 상태 동기화
       appState.users[userId].name = newName.trim();
       await saveCloudData();
       renderAll();
@@ -530,7 +530,7 @@
   }
 
   async function editMemo(userId, tab) {
-    await fetchLatestCloudData(); // 동기화
+    await fetchLatestCloudData();
     const board = appState.boards[userId][tab];
     document.getElementById(`memoSection-${userId}`).innerHTML = `
       <textarea class="memo-textarea" id="memoInput-${userId}" placeholder="내용을 입력하세요">${board.memo || ''}</textarea>
@@ -559,7 +559,7 @@
   }
 
   async function openRequestModal() {
-    await fetchLatestCloudData(); // 최신 동기화
+    await fetchLatestCloudData();
     isRequestMode = true;
     selectedTargetUser = (currentUserId === 'user1' ? 'user2' : 'user1');
     
@@ -582,7 +582,7 @@
   }
 
   async function openStickerModal(targetUserId) {
-    await fetchLatestCloudData(); // 최신 동기화
+    await fetchLatestCloudData();
     isRequestMode = false;
     selectedTargetUser = targetUserId;
     const tab = appState.users[targetUserId].activeTab;
@@ -620,7 +620,7 @@
     const reason = document.getElementById('stickerReason').value.trim();
     if (!reason) { alert('사유를 입력해주세요!'); return; }
 
-    // 작업 직전 최신 데이터로 동기화하여 덮어쓰기 충돌 방지
+    // CRITICAL: 스티커를 주거나 요청을 보내기 직전에도 무조건 최신 클라우드 데이터를 불러와 동기화합니다!
     await fetchLatestCloudData();
 
     const today = new Date().toISOString().split('T')[0];
@@ -741,7 +741,7 @@
   function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
 
   async function openInboxModal() {
-    await fetchLatestCloudData(); // 최신 요청 목록 불러오기
+    await fetchLatestCloudData();
     const inboxList = document.getElementById('inboxList');
     const myRequests = (appState.requests || []).filter(r => r && r.to === currentUserId);
 
@@ -772,13 +772,11 @@
   function closeInboxModal() { document.getElementById('inboxModal').classList.remove('active'); }
 
   async function acceptRequest(reqId) {
-    // 수락 직전 최신 데이터 동기화
     await fetchLatestCloudData();
 
     const req = (appState.requests || []).find(r => r && r.id === reqId);
     if (!req) { alert('이미 처리되었거나 존재하지 않는 요청입니다.'); closeInboxModal(); renderAll(); return; }
 
-    // 요청 목록에서 확실하게 제거
     appState.requests = appState.requests.filter(r => r && r.id !== reqId);
 
     const targetBoardUser = req.isRequest ? req.from : currentUserId;
@@ -840,7 +838,6 @@
   }
 
   async function rejectRequest(reqId) {
-    // 거절 직전 최신 데이터 동기화
     await fetchLatestCloudData();
 
     appState.requests = (appState.requests || []).filter(r => r && r.id !== reqId);
