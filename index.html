@@ -67,7 +67,6 @@
     .grape-grape.full, .grape-grape.half { cursor: pointer; }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
     
-    /* 0.5개(반쪽) 스타일: 그라데이션으로 반만 채우기 */
     .grape-grape.half.like { background: linear-gradient(90deg, var(--pink-main) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.3); }
     .grape-grape.half.bad { background: linear-gradient(90deg, var(--bad-color) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.3); }
     
@@ -1062,25 +1061,18 @@
     if (!item) return;
 
     currentEditingArchiveStickerIndex = stickerIdx;
-    const isLatest = (index === archive.length - 1);
 
     document.getElementById('archiveItemDate').innerText = `날짜: ${item.date}${item.isRequest ? ' [요청]' : ''}`;
     document.getElementById('archiveItemReasonInput').value = item.reason;
     document.getElementById('archiveItemValText').innerText = `${item.value}개`;
 
     const btnsDiv = document.getElementById('archiveItemModalBtns');
-    if (isLatest) {
-      btnsDiv.innerHTML = `
-        <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
-        <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
-        <button class="save" onclick="saveArchiveItemEdit()">저장</button>
-      `;
-    } else {
-      btnsDiv.innerHTML = `
-        <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
-        <button class="save" onclick="saveArchiveItemEdit()">저장</button>
-      `;
-    }
+    // 완성된 판 안에서의 스티커 삭제는 항상 허용됨 (남은 총량에 따라 자동 처리됨)
+    btnsDiv.innerHTML = `
+      <button class="delete-btn" onclick="deleteArchiveItem()">삭제</button>
+      <button class="cancel" onclick="closeArchiveItemModal()">취소</button>
+      <button class="save" onclick="saveArchiveItemEdit()">저장</button>
+    `;
 
     document.getElementById('archiveItemModal').classList.add('active');
   }
@@ -1107,34 +1099,57 @@
   }
 
   async function deleteArchiveItem() {
-    if (!confirm('이 스티커를 삭제하시겠습니까? (삭제하면 이 판이 미완성 상태가 되어 현재 진행 중인 판으로 되돌아갑니다!)')) return;
+    if (!confirm('이 스티커를 삭제하시겠습니까?')) return;
 
     await fetchLatestCloudData();
     const { userId, index } = editingArchiveTarget;
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    if (currentEditingArchiveStickerIndex > -1 && currentEditingArchiveStickerIndex < archivedBoard.stickers.length) {
-      archivedBoard.stickers.splice(currentEditingArchiveStickerIndex, 1);
-    }
+    // 삭제할 스티커의 가치 (1 또는 0.5)
+    const deletedSticker = archivedBoard.stickers[currentEditingArchiveStickerIndex];
+    const deletedVal = deletedSticker.value;
 
-    archive.splice(index, 1);
+    // 해당 스티커 제거
+    archivedBoard.stickers.splice(currentEditingArchiveStickerIndex, 1);
+
     const activeTab = archivedBoard.type;
-    
-    if (!appState.boards[userId][activeTab]) {
-      appState.boards[userId][activeTab] = { currentVol: 1, stickers: [], memo: '' };
-    }
     const activeBoard = appState.boards[userId][activeTab];
 
-    activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
-    activeBoard.currentVol = archivedBoard.vol;
+    // 현재 총 남은 스티커 가치 계산 (완성판 남은 것 + 현재 판에 있는 것들)
+    let archivedSum = archivedBoard.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    let activeSum = activeBoard.stickers.reduce((acc, cur) => acc + cur.value, 0);
+    let totalAvailable = archivedSum + activeSum;
+
+    if (totalAvailable >= 15) {
+      // 여전히 15개가 넘으므로, 현재 판의 맨 앞에서부터 부족한 만큼(deletedVal) 끌어와서 채움
+      let needed = deletedVal;
+      while (needed > 0 && activeBoard.stickers.length > 0) {
+        const firstActive = activeBoard.stickers[0];
+        if (firstActive.value <= needed) {
+          archivedBoard.stickers.push(activeBoard.stickers.shift());
+          needed -= firstActive.value;
+        } else {
+          // active의 첫 번째 스티커가 더 크면 쪼개서 가져옴
+          archivedBoard.stickers.push({ ...firstActive, value: needed });
+          firstActive.value -= needed;
+          needed = 0;
+        }
+      }
+      alert('완성된 판의 빈자리가 현재 진행 중인 판의 첫 번째 스티커로 채워졌습니다!');
+    } else {
+      // 총 개수가 15개 미만으로 떨어지면 기존처럼 이 판을 해체해서 현재 판으로 되돌림
+      archive.splice(index, 1);
+      activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
+      activeBoard.currentVol = archivedBoard.vol;
+      alert('스티커가 삭제되어 전체 개수가 15개 미만이 되므로, 해당 판이 현재 진행 중인 판으로 되돌아왔습니다!');
+    }
 
     await saveCloudData();
     closeArchiveItemModal();
     closeArchiveEditModal();
     closeArchiveModal();
     renderAll();
-    alert('스티커가 삭제되어 해당 판이 현재 진행 중인 판으로 되돌아왔습니다!');
   }
 </script>
 </body>
