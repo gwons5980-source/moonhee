@@ -64,11 +64,8 @@
     .grape-row { display: flex; gap: 8px; }
     .grape-grape { width: 46px; height: 46px; border-radius: 50%; background: #ffffff; border: 1.5px dashed #ffd1dc; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 600; color: #bbb; position: relative; overflow: hidden; cursor: default; }
     .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
-    .grape-grape.full, .grape-grape.half { cursor: pointer; }
+    .grape-grape.full { cursor: pointer; }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
-    
-    .grape-grape.half.like { background: linear-gradient(90deg, var(--pink-main) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.3); }
-    .grape-grape.half.bad { background: linear-gradient(90deg, var(--bad-color) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.3); }
     
     .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
     .grape-grape.full.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
@@ -148,14 +145,10 @@
   </div>
 </div>
 
-<!-- 스티커 주기/요청 모달 -->
+<!-- 스티커 주기/요청 모달 (1개 고정) -->
 <div class="modal-overlay" id="addModal">
   <div class="modal">
     <h3 id="modalTitle">스티커</h3>
-    <div class="modal-options">
-      <button class="selected" id="val-1" onclick="selectValue(1)">1개</button>
-      <button id="val-05" onclick="selectValue(0.5)">0.5개</button>
-    </div>
     <textarea id="stickerReason" placeholder="사유를 적어주세요!"></textarea>
     <div class="modal-btns">
       <button class="cancel" onclick="closeAddModal()">취소</button>
@@ -267,7 +260,7 @@
     requests: []
   };
 
-  let selectedTargetUser = null, selectedVal = 1;
+  let selectedTargetUser = null;
   let currentActiveStickerIndex = -1, currentActiveTargetUser = null, currentActiveTab = null;
   let editingArchiveTarget = null;
   let currentEditingArchiveStickerIndex = -1;
@@ -491,21 +484,19 @@
         const grape = document.createElement('div');
         grape.className = 'grape-grape';
         
-        let accumulated = 0, filledType = null, foundStickerIdx = -1;
+        let accumulated = 0, foundStickerIdx = -1;
         for (let idx = 0; idx < board.stickers.length; idx++) {
           let item = board.stickers[idx];
           accumulated += item.value;
           if (accumulated - item.value < grapeIndex + 1 && accumulated > grapeIndex) {
             foundStickerIdx = idx;
-            filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
+            break;
           }
         }
 
-        if (filledType && foundStickerIdx !== -1) {
-          grape.classList.add(filledType, tab);
-          if (filledType === 'full') {
-            grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
-          }
+        if (foundStickerIdx !== -1) {
+          grape.classList.add('full', tab);
+          grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
           grape.onclick = () => showStickerDetail(userId, foundStickerIdx, tab);
         } else {
           grape.innerText = grapeIndex + 1;
@@ -583,15 +574,8 @@
 
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); isRequestMode = false; return; }
 
-    selectedVal = 1;
     document.getElementById('modalTitle').innerText = '좋아요 스티커 요청하기';
     document.getElementById('stickerReason').value = '';
-
-    const btn05 = document.getElementById('val-05');
-    const btn1 = document.getElementById('val-1');
-    btn1.style.display = 'block';
-    btn1.className = 'selected';
-    btn05.className = '';
 
     document.getElementById('addModal').classList.add('active');
   }
@@ -606,16 +590,8 @@
 
     if (currentTotal >= 15) { alert('이미 15개가 완성된 판입니다.'); return; }
 
-    selectedVal = 1;
-
     document.getElementById('modalTitle').innerText = tab === 'like' ? '💖 좋아요 스티커 💖' : '💔 나빠요 스티커 요청 💔';
     document.getElementById('stickerReason').value = '';
-
-    const btn05 = document.getElementById('val-05');
-    const btn1 = document.getElementById('val-1');
-    btn1.style.display = 'block';
-    btn1.className = 'selected';
-    btn05.className = '';
 
     document.getElementById('addModal').classList.add('active');
   }
@@ -623,12 +599,6 @@
   function closeAddModal() { 
     isRequestMode = false;
     document.getElementById('addModal').classList.remove('active'); 
-  }
-
-  function selectValue(val) {
-    selectedVal = val;
-    document.getElementById('val-1').className = val === 1 ? 'selected' : '';
-    document.getElementById('val-05').className = val === 0.5 ? 'selected' : '';
   }
 
   async function submitStickerModal() {
@@ -646,7 +616,7 @@
         from: currentUserId,
         to: selectedTargetUser,
         type: 'like',
-        value: selectedVal,
+        value: 1,
         reason: reason,
         date: today,
         isRequest: true
@@ -672,10 +642,12 @@
     let maxAllowed = 15 - currentTotal;
 
     if (tab === 'like') {
-      let firstPart = maxAllowed >= selectedVal ? selectedVal : maxAllowed;
-      let secondPart = selectedVal - firstPart;
+      let firstPart = maxAllowed >= 1 ? 1 : maxAllowed;
+      let secondPart = 1 - firstPart;
 
-      board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId, isRequest: false });
+      if (firstPart > 0) {
+        board.stickers.push({ value: firstPart, reason: reason, date: today, from: currentUserId, isRequest: false });
+      }
 
       let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
       if (newTotal >= 15) {
@@ -712,7 +684,7 @@
         from: currentUserId,
         to: selectedTargetUser,
         type: 'bad',
-        value: selectedVal,
+        value: 1,
         reason: reason,
         date: today
       });
@@ -844,13 +816,15 @@
     let firstPart = maxAllowed >= req.value ? req.value : maxAllowed;
     let secondPart = req.value - firstPart;
 
-    board.stickers.push({ 
-      value: firstPart, 
-      reason: req.reason, 
-      date: req.date, 
-      from: req.isRequest ? currentUserId : req.from,
-      isRequest: true 
-    });
+    if (firstPart > 0) {
+      board.stickers.push({ 
+        value: firstPart, 
+        reason: req.reason, 
+        date: req.date, 
+        from: req.isRequest ? currentUserId : req.from,
+        isRequest: true 
+      });
+    }
 
     let newTotal = board.stickers.reduce((acc, cur) => acc + cur.value, 0);
     if (newTotal >= 15) {
@@ -1022,27 +996,23 @@
         const grape = document.createElement('div');
         grape.className = 'grape-grape';
 
-        let accumulated = 0, filledType = null, foundStIdx = -1;
+        let accumulated = 0, foundStIdx = -1;
         for (let idx = 0; idx < item.stickers.length; idx++) {
           let st = item.stickers[idx];
           accumulated += st.value;
           if (accumulated - st.value < grapeIndex + 1 && accumulated > grapeIndex) {
             foundStIdx = idx;
-            filledType = accumulated >= grapeIndex + 1 ? 'full' : 'half';
+            break;
           }
         }
 
-        if (filledType && foundStIdx !== -1) {
-          // 완성판 내부에서는 0.5개(half)여도 반쪽 모양으로 정상 반영되어 그려짐
-          grape.classList.add(filledType, item.type);
-          if (filledType === 'full') {
-            grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
-          }
+        if (foundStIdx !== -1) {
+          grape.classList.add('full', item.type);
+          grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
           grape.onclick = () => openArchiveItemModal(foundStIdx, index);
         } else {
           grape.innerText = grapeIndex + 1;
         }
-        rowDiv.appendChild(rowDivParent => {}); // safe placeholder
         rowDiv.appendChild(grape);
         stickerIdx++;
       }
@@ -1108,9 +1078,6 @@
     const archive = appState.boards[userId].archive;
     const archivedBoard = archive[index];
 
-    const deletedSticker = archivedBoard.stickers[currentEditingArchiveStickerIndex];
-    const deletedVal = deletedSticker.value;
-
     archivedBoard.stickers.splice(currentEditingArchiveStickerIndex, 1);
 
     const activeTab = archivedBoard.type;
@@ -1121,20 +1088,13 @@
     let totalAvailable = archivedSum + activeSum;
 
     if (totalAvailable >= 15) {
-      let needed = deletedVal;
-      while (needed > 0 && activeBoard.stickers.length > 0) {
-        const firstActive = activeBoard.stickers[0];
-        if (firstActive.value <= needed) {
-          archivedBoard.stickers.push(activeBoard.stickers.shift());
-          needed -= firstActive.value;
-        } else {
-          archivedBoard.stickers.push({ ...firstActive, value: needed });
-          firstActive.value -= needed;
-          needed = 0;
-        }
+      // 15개가 넘으므로 현재 진행 중인 판의 첫 번째 스티커를 끌고 와서 메움
+      if (activeBoard.stickers.length > 0) {
+        archivedBoard.stickers.push(activeBoard.stickers.shift());
       }
       alert('완성된 판의 빈자리가 현재 진행 중인 판의 첫 번째 스티커로 채워졌습니다!');
     } else {
+      // 총 개수가 15개 미만이면 판을 해체하여 현재 판으로 되돌림
       archive.splice(index, 1);
       activeBoard.stickers = [...archivedBoard.stickers, ...activeBoard.stickers];
       activeBoard.currentVol = archivedBoard.vol;
