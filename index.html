@@ -66,8 +66,14 @@
     .grape-container.bad-mode .grape-grape { border: 1.5px dashed var(--bad-border); }
     .grape-grape.full, .grape-grape.half { cursor: pointer; }
     .grape-grape svg { width: 82%; height: 82%; display: block; }
-    .grape-grape.full.like, .grape-grape.half.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
-    .grape-grape.full.bad, .grape-grape.half.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
+    
+    /* 0.5개(반쪽) 스타일: 그라데이션으로 반만 채우기 */
+    .grape-grape.half.like { background: linear-gradient(90deg, var(--pink-main) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.3); }
+    .grape-grape.half.bad { background: linear-gradient(90deg, var(--bad-color) 50%, #ffffff 50%); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.3); }
+    
+    .grape-grape.full.like { background: var(--pink-main); border: none; box-shadow: 0 4px 10px rgba(255,182,193,0.5); }
+    .grape-grape.full.bad { background: var(--bad-color); border: none; box-shadow: 0 4px 10px rgba(161,181,204,0.4); }
+
     .memo-section { margin-top: 16px; background: #faf8f9; border-radius: 14px; padding: 12px 14px; border: 1px dashed #e6d2d7; }
     .memo-section.bad-mode { background: #f4f6f9; border-color: #cbd5e1; }
     .memo-line { font-size: 0.85rem; font-weight: 600; color: #444; display: flex; justify-content: space-between; align-items: center; word-break: break-all; }
@@ -498,7 +504,9 @@
 
         if (filledType && foundStickerIdx !== -1) {
           grape.classList.add(filledType, tab);
-          grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
+          if (filledType === 'full') {
+            grape.innerHTML = tab === 'like' ? smileSvg : sadSvg;
+          }
           grape.onclick = () => showStickerDetail(userId, foundStickerIdx, tab);
         } else {
           grape.innerText = grapeIndex + 1;
@@ -718,7 +726,6 @@
     closeAddModal();
   }
 
-  // 현재 판 스티커 상세 / 수정 / 삭제 모달 열기 (인덱스 기반으로 안전하게 찾음)
   function showStickerDetail(targetUserId, stickerIndex, tab) {
     const board = appState.boards[targetUserId][tab];
     const item = board.stickers[stickerIndex];
@@ -1027,7 +1034,9 @@
 
         if (filledType && foundStIdx !== -1) {
           grape.classList.add(filledType, item.type);
-          grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
+          if (filledType === 'full') {
+            grape.innerHTML = item.type === 'like' ? smileSvg : sadSvg;
+          }
           grape.onclick = () => openArchiveItemModal(foundStIdx, index);
         } else {
           grape.innerText = grapeIndex + 1;
