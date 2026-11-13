@@ -1,0 +1,8 @@
+{
+  "name": "🍇 문희사항 🍇",
+  "short_name": "문희사항",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#fff9fb",
+  "theme_color": "#ffb6c1"
+}
