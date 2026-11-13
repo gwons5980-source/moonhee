@@ -130,7 +130,50 @@
     </div>
   </header>
 
-  <div class="dual-board" id="dualBoardContainer"></div>
+  <!-- 사용자 1, 사용자 2 카드 HTML 구조를 완전히 고정 -->
+  <div class="dual-board" id="dualBoardContainer">
+    <div class="user-card" id="card-user1">
+      <div class="user-card-header">
+        <span class="user-name" id="name-user1" onclick="editUserName('user1')">사용자 1</span>
+        <div class="header-action-btns" id="header-btns-user1">
+          <button class="fold-btn" onclick="toggleFold('user1')">▲</button>
+        </div>
+      </div>
+      <div class="card-body-content" id="body-user1">
+        <div class="board-toggle" id="toggle-user1">
+          <button class="active like" onclick="switchBoard('user1', 'like')">좋아요</button>
+          <button class="bad" onclick="switchBoard('user1', 'bad')">나빠요</button>
+        </div>
+        <div class="board-status">
+          <span id="vol-user1">Vol. 1</span>
+          <span id="count-user1">0 / 15개</span>
+        </div>
+        <div class="grape-container" id="grape-user1"></div>
+        <div class="memo-section" id="memoSection-user1"></div>
+      </div>
+    </div>
+
+    <div class="user-card" id="card-user2">
+      <div class="user-card-header">
+        <span class="user-name" id="name-user2" onclick="editUserName('user2')">사용자 2</span>
+        <div class="header-action-btns" id="header-btns-user2">
+          <button class="fold-btn" onclick="toggleFold('user2')">▲</button>
+        </div>
+      </div>
+      <div class="card-body-content" id="body-user2">
+        <div class="board-toggle" id="toggle-user2">
+          <button class="active like" onclick="switchBoard('user2', 'like')">좋아요</button>
+          <button class="bad" onclick="switchBoard('user2', 'bad')">나빠요</button>
+        </div>
+        <div class="board-status">
+          <span id="vol-user2">Vol. 1</span>
+          <span id="count-user2">0 / 15개</span>
+        </div>
+        <div class="grape-container" id="grape-user2"></div>
+        <div class="memo-section" id="memoSection-user2"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- 이용약관 모달 -->
@@ -239,7 +282,6 @@
   let currentUserId = null;
   let isSignUpMode = false;
   let foldedState = { user1: false, user2: false };
-  let isInitialized = false; // 최초 렌더링 여부 체크용
 
   const smileSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 58 Q 50 82 72 58" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
   const sadSvg = `<svg viewBox="0 0 100 100"><ellipse cx="36" cy="38" rx="5.5" ry="11" fill="#333" /><ellipse cx="64" cy="38" rx="5.5" ry="11" fill="#333" /><path d="M 28 72 Q 50 52 72 72" fill="none" stroke="#333" stroke-width="6.5" stroke-linecap="round" /></svg>`;
@@ -363,17 +405,8 @@
   }
 
   function renderAll() {
-    const container = document.getElementById('dualBoardContainer');
-    
-    // 최초 1회만 카드를 생성하고, 그 이후엔 내부 내용만 갱신하여 위치 흔들림 원천 방지
-    if (!isInitialized || container.children.length !== 2) {
-      container.innerHTML = `
-        ${createCardHtml('user1')}
-        ${createCardHtml('user2')}
-      `;
-      isInitialized = true;
-    }
-
+    renderCardHeaderAndButtons('user1');
+    renderCardHeaderAndButtons('user2');
     renderBoardContent('user1');
     renderBoardContent('user2');
     updateRequestBadge();
@@ -390,51 +423,32 @@
     }
   }
 
-  function createCardHtml(userId) {
-    const isFolded = foldedState[userId];
+  function renderCardHeaderAndButtons(userId) {
     const userName = (appState.users && appState.users[userId] && appState.users[userId].name) ? appState.users[userId].name : (userId === 'user1' ? '사용자 1' : '사용자 2');
     const isMyCard = (userId === currentUserId);
     const tab = appState.users[userId].activeTab;
-    
-    let actionButtonsHtml = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
-    
-    if (isMyCard) {
-      actionButtonsHtml = `
-        <div class="header-action-btns">
-          <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>
-        </div>
-      `;
-    } else {
-      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="좋아요 스티커 요청하기">👉</button>` : ``;
-      actionButtonsHtml = `
-        <div class="header-action-btns">
+    const isFolded = foldedState[userId];
+
+    const nameSpan = document.getElementById(`name-${userId}`);
+    if (nameSpan) {
+      nameSpan.innerText = userName;
+      if (isMyCard) nameSpan.className = 'user-name editable';
+      else nameSpan.className = 'user-name';
+    }
+
+    const headerBtns = document.getElementById(`header-btns-${userId}`);
+    if (headerBtns) {
+      if (isMyCard) {
+        headerBtns.innerHTML = `<button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>`;
+      } else {
+        let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="좋아요 스티커 요청하기">👉</button>` : ``;
+        headerBtns.innerHTML = `
           ${pokeBtnHtml}
           <button class="sticker-btn" onclick="openStickerModal('${userId}')">스티커</button>
           <button class="fold-btn" onclick="toggleFold('${userId}')">${isFolded ? '▼' : '▲'}</button>
-        </div>
-      `;
+        `;
+      }
     }
-
-    return `
-      <div class="user-card" id="card-${userId}">
-        <div class="user-card-header">
-          <span class="user-name ${userId === currentUserId ? 'editable' : ''}" id="name-${userId}" onclick="editUserName('${userId}')">${userName}</span>
-          ${actionButtonsHtml}
-        </div>
-        <div class="card-body-content ${isFolded ? 'folded' : ''}" id="body-${userId}">
-          <div class="board-toggle" id="toggle-${userId}">
-            <button class="active like" onclick="switchBoard('${userId}', 'like')">좋아요</button>
-            <button class="bad" onclick="switchBoard('${userId}', 'bad')">나빠요</button>
-          </div>
-          <div class="board-status">
-            <span id="vol-${userId}">Vol. 1</span>
-            <span id="count-${userId}">0 / 15개</span>
-          </div>
-          <div class="grape-container" id="grape-${userId}"></div>
-          <div class="memo-section" id="memoSection-${userId}"></div>
-        </div>
-      </div>
-    `;
   }
 
   function toggleFold(userId) {
@@ -443,10 +457,10 @@
     const foldBtn = document.querySelector(`#card-${userId} .fold-btn`);
     if (foldedState[userId]) {
       body.classList.add('folded');
-      foldBtn.innerText = '▼';
+      if (foldBtn) foldBtn.innerText = '▼';
     } else {
       body.classList.remove('folded');
-      foldBtn.innerText = '▲';
+      if (foldBtn) foldBtn.innerText = '▲';
     }
   }
 
@@ -468,11 +482,8 @@
     const container = document.getElementById(`grape-${userId}`);
     const toggle = document.getElementById(`toggle-${userId}`);
     const memoSection = document.getElementById(`memoSection-${userId}`);
-    const nameSpan = document.getElementById(`name-${userId}`);
     
-    if (nameSpan && appState.users[userId]) {
-      nameSpan.innerText = appState.users[userId].name;
-    }
+    renderCardHeaderAndButtons(userId);
 
     if (tab === 'bad') {
       container.classList.add('bad-mode'); toggle.classList.add('bad-mode'); memoSection.classList.add('bad-mode');
@@ -579,19 +590,6 @@
   function switchBoard(userId, tab) {
     appState.users[userId].activeTab = tab;
     renderBoardContent(userId);
-    
-    // 상대방 카드 헤더의 뽀기(👉) 버튼 상태도 실시간으로 갱신
-    const otherUserId = currentUserId === 'user1' ? 'user2' : 'user1';
-    if (userId === otherUserId) {
-      const card = document.getElementById(`card-${otherUserId}`);
-      const headerBtns = card.querySelector('.header-action-btns');
-      let pokeBtnHtml = tab === 'like' ? `<button class="poke-btn" onclick="openRequestModal()" title="좋아요 스티커 요청하기">👉</button>` : ``;
-      headerBtns.innerHTML = `
-        ${pokeBtnHtml}
-        <button class="sticker-btn" onclick="openStickerModal('${otherUserId}')">스티커</button>
-        <button class="fold-btn" onclick="toggleFold('${otherUserId}')">${foldedState[otherUserId] ? '▼' : '▲'}</button>
-      `;
-    }
   }
 
   async function openRequestModal() {
@@ -1127,7 +1125,7 @@
 
     await fetchLatestCloudData();
     const { userId, index } = editingArchiveTarget;
-    const targetSticker = appState.boards[userId].archive[index].stickers[currentEditingArchiveStIndex || currentEditingArchiveStickerIndex];
+    const targetSticker = appState.boards[userId].archive[index].stickers[currentEditingArchiveStickerIndex];
     if (targetSticker) {
       targetSticker.reason = newReason;
       await saveCloudData();
